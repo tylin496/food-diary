@@ -83,6 +83,15 @@ export function FoodModal({
     onChange({ ...draft, subItems: draft.subItems.filter((sub) => sub.id !== id) })
   }
 
+  const removeSubItemPhoto = (id: string) => {
+    updateSubItem(id, { imageUrl: null })
+    setSubPreviews((prev) => {
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+  }
+
   const handleSubFileChange = async (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -238,6 +247,20 @@ export function FoodModal({
                         <Camera size={14} />
                       )}
                       {subUploading[sub.id] && <span className="sub-item-photo-uploading">上傳中</span>}
+                      {(sub.imageUrl || subPreviews[sub.id]) && !subUploading[sub.id] && (
+                        <button
+                          type="button"
+                          className="sub-item-photo-remove"
+                          aria-label="移除子項目照片"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            removeSubItemPhoto(sub.id)
+                          }}
+                        >
+                          <X size={10} />
+                        </button>
+                      )}
                       <input
                         type="file"
                         accept="image/*"
