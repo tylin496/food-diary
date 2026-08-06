@@ -10,30 +10,37 @@ import { FoodModal } from './components/FoodModal'
 import { formatItemsAsText, generateId, toNumber } from './utils'
 
 const GRAYSCALE_PHOTOS = false
+const OWNER_UID = '277SEyYGZyUyapmKB5Fu4OC4dDR2'
 
 export default function App() {
   const { user, loading: authLoading, signIn, logOut } = useAuth()
 
   if (authLoading) return null
 
-  if (!user) {
-    return (
-      <div className="empty-state" style={{ minHeight: '100vh' }}>
-        <ImageIcon size={48} />
-        <h3>食物熱量記錄</h3>
-        <p className="text-muted">用 Google 帳號登入，紀錄會永久保存並跨裝置同步</p>
-        <button type="button" className="btn btn-primary" onClick={signIn}>
-          使用 Google 登入
-        </button>
-      </div>
-    )
-  }
+  const isOwner = user?.uid === OWNER_UID
 
-  return <FoodDiary uid={user.uid} userLabel={user.displayName ?? user.email ?? ''} onLogOut={logOut} />
+  return (
+    <FoodDiary
+      isOwner={isOwner}
+      userLabel={user?.displayName ?? user?.email ?? ''}
+      onSignIn={signIn}
+      onLogOut={logOut}
+    />
+  )
 }
 
-function FoodDiary({ uid, userLabel, onLogOut }: { uid: string; userLabel: string; onLogOut: () => void }) {
-  const [items, setItems, itemsLoading] = useCloudItems(uid)
+function FoodDiary({
+  isOwner,
+  userLabel,
+  onSignIn,
+  onLogOut,
+}: {
+  isOwner: boolean
+  userLabel: string
+  onSignIn: () => void
+  onLogOut: () => void
+}) {
+  const [items, setItems, itemsLoading] = useCloudItems(OWNER_UID)
   const [search, setSearch] = useState('')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
@@ -48,7 +55,7 @@ function FoodDiary({ uid, userLabel, onLogOut }: { uid: string; userLabel: strin
     return items.filter((item) => item.name.toLowerCase().includes(q))
   }, [items, search])
 
-  const reorderEnabled = search.trim().length === 0
+  const reorderEnabled = isOwner && search.trim().length === 0
   const [draggingId, setDraggingId] = useState<string | null>(null)
   const dragStateRef = useRef<{ id: string } | null>(null)
 
@@ -155,7 +162,7 @@ function FoodDiary({ uid, userLabel, onLogOut }: { uid: string; userLabel: strin
   }, [filteredItems, modalOpen])
 
   const mergeIntoItem = (baseId: string, mergeIds: string[]) => {
-    if (mergeIds.length === 0) return
+    if (!isOwner || mergeIds.length === 0) return
     const base = items.find((item) => item.id === baseId)
     if (!base) return
     const mergeItems = items.filter((item) => mergeIds.includes(item.id))
@@ -192,6 +199,7 @@ function FoodDiary({ uid, userLabel, onLogOut }: { uid: string; userLabel: strin
   }
 
   const openAddModal = () => {
+    if (!isOwner) return
     setEditingId(null)
     setActiveId(generateId())
     setDraft(emptyDraft)
@@ -199,6 +207,7 @@ function FoodDiary({ uid, userLabel, onLogOut }: { uid: string; userLabel: strin
   }
 
   const openEditModal = (id: string) => {
+    if (!isOwner) return
     const item = items.find((i) => i.id === id)
     if (!item) return
     setEditingId(id)
@@ -312,6 +321,7 @@ function FoodDiary({ uid, userLabel, onLogOut }: { uid: string; userLabel: strin
   }
 
   const deleteItem = (id: string) => {
+    if (!isOwner) return
     if (!window.confirm('確定要刪除這筆紀錄嗎？')) return
     setItems((prev) => prev.filter((item) => item.id !== id))
     setSelectedIds((prev) => {
@@ -342,18 +352,26 @@ function FoodDiary({ uid, userLabel, onLogOut }: { uid: string; userLabel: strin
             placeholder="搜尋食物名稱"
           />
         </div>
-        <button type="button" className="btn btn-primary" onClick={openAddModal}>
-          <Plus size={16} />
-          新增食物
-        </button>
-        <button
-          type="button"
-          className="btn btn-secondary btn-icon"
-          title={`登出 ${userLabel}`}
-          onClick={onLogOut}
-        >
-          <LogOut size={16} />
-        </button>
+        {isOwner ? (
+          <>
+            <button type="button" className="btn btn-primary" onClick={openAddModal}>
+              <Plus size={16} />
+              新增食物
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary btn-icon"
+              title={`登出 ${userLabel}`}
+              onClick={onLogOut}
+            >
+              <LogOut size={16} />
+            </button>
+          </>
+        ) : (
+          <button type="button" className="btn btn-secondary" onClick={onSignIn}>
+            使用 Google 登入
+          </button>
+        )}
       </nav>
 
       <main className="main">
@@ -363,10 +381,12 @@ function FoodDiary({ uid, userLabel, onLogOut }: { uid: string; userLabel: strin
             <ImageIcon size={48} />
             <h3>還沒有任何紀錄</h3>
             <p className="text-muted">拍下食物照片，記錄重量、蛋白質與熱量，開始建立你的資料庫</p>
-            <button type="button" className="btn btn-primary" onClick={openAddModal}>
-              <Plus size={16} />
-              新增第一筆紀錄
-            </button>
+            {isOwner && (
+              <button type="button" className="btn btn-primary" onClick={openAddModal}>
+                <Plus size={16} />
+                新增第一筆紀錄
+              </button>
+            )}
           </div>
         )}
 
@@ -382,6 +402,7 @@ function FoodDiary({ uid, userLabel, onLogOut }: { uid: string; userLabel: strin
                 item={item}
                 selected={selectedIds.has(item.id)}
                 grayscale={GRAYSCALE_PHOTOS}
+                readOnly={!isOwner}
                 reorderEnabled={reorderEnabled}
                 dragging={draggingId === item.id}
                 onToggle={toggleSelect}

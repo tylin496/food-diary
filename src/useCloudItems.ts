@@ -50,7 +50,9 @@ export function useCloudItems(uid: string) {
         // sitting in this browser's localStorage instead of starting empty.
         migratedRef.current = true
         const local = readLocalCache()
-        setDoc(ref, { items: local })
+        setDoc(ref, { items: local }).catch(() => {
+          // not signed in as the owner — nothing to migrate on this visit
+        })
       }
       setLoading(false)
     })

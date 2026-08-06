@@ -6,6 +6,7 @@ interface FoodCardProps {
   item: FoodItem
   selected: boolean
   grayscale: boolean
+  readOnly: boolean
   reorderEnabled: boolean
   dragging: boolean
   onToggle: (id: string) => void
@@ -18,6 +19,7 @@ export function FoodCard({
   item,
   selected,
   grayscale,
+  readOnly,
   reorderEnabled,
   dragging,
   onToggle,
@@ -53,42 +55,44 @@ export function FoodCard({
             <Check size={14} strokeWidth={2.5} />
           </div>
         )}
-        <div className="card-actions">
-          {reorderEnabled && (
+        {!readOnly && (
+          <div className="card-actions">
+            {reorderEnabled && (
+              <button
+                type="button"
+                className="drag-handle"
+                aria-label="拖曳排序"
+                onClick={(e) => e.stopPropagation()}
+                onPointerDown={(e) => {
+                  e.stopPropagation()
+                  onDragHandlePointerDown(item.id, e)
+                }}
+              >
+                <GripVertical size={14} />
+              </button>
+            )}
             <button
               type="button"
-              className="drag-handle"
-              aria-label="拖曳排序"
-              onClick={(e) => e.stopPropagation()}
-              onPointerDown={(e) => {
+              aria-label="編輯"
+              onClick={(e) => {
                 e.stopPropagation()
-                onDragHandlePointerDown(item.id, e)
+                onEdit(item.id)
               }}
             >
-              <GripVertical size={14} />
+              <Pencil size={14} />
             </button>
-          )}
-          <button
-            type="button"
-            aria-label="編輯"
-            onClick={(e) => {
-              e.stopPropagation()
-              onEdit(item.id)
-            }}
-          >
-            <Pencil size={14} />
-          </button>
-          <button
-            type="button"
-            aria-label="刪除"
-            onClick={(e) => {
-              e.stopPropagation()
-              onDelete(item.id)
-            }}
-          >
-            <Trash2 size={14} />
-          </button>
-        </div>
+            <button
+              type="button"
+              aria-label="刪除"
+              onClick={(e) => {
+                e.stopPropagation()
+                onDelete(item.id)
+              }}
+            >
+              <Trash2 size={14} />
+            </button>
+          </div>
+        )}
       </div>
       <div className="food-name">{item.name}</div>
       {subItems.length > 0 && (
