@@ -7,7 +7,7 @@ import { FoodCard } from './components/FoodCard'
 import { SelectionBar } from './components/SelectionBar'
 import { FoodModal } from './components/FoodModal'
 
-const GRAYSCALE_PHOTOS = true
+const GRAYSCALE_PHOTOS = false
 
 function toNumber(value: string): number {
   const n = Number(value)
