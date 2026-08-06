@@ -69,6 +69,8 @@ function FoodBook({
   const mountDelaysCapturedRef = useRef(false)
   const dragMetaRef = useRef<{ id: string; grabOffsetX: number; grabOffsetY: number } | null>(null)
   const lastPointerRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
+  const springOffsetRef = useRef<{ x: number; y: number } | null>(null)
+  const dragRafRef = useRef<number | null>(null)
   const selectPulseTimerRef = useRef<number | null>(null)
 
   if (!mountDelaysCapturedRef.current && !itemsLoading) {
@@ -95,17 +97,54 @@ function FoodBook({
     prevRectsRef.current = rects
   }, [])
 
-  const updateDragTransform = useCallback((el: HTMLElement, clientX: number, clientY: number) => {
+  const computeDragOffset = useCallback((el: HTMLElement, clientX: number, clientY: number) => {
     const meta = dragMetaRef.current
-    if (!meta) return
+    if (!meta) return null
     const saved = el.style.transform
     el.style.transform = ''
     const rect = el.getBoundingClientRect()
     el.style.transform = saved
-    const dx = clientX - meta.grabOffsetX - rect.left
-    const dy = clientY - meta.grabOffsetY - rect.top
-    el.style.transform = `translate(${dx}px,${dy}px) scale(1.06) rotate(${dx > 0 ? 2 : -2}deg)`
+    return { x: clientX - meta.grabOffsetX - rect.left, y: clientY - meta.grabOffsetY - rect.top }
   }, [])
+
+  const applyDragTransform = (el: HTMLElement, x: number, y: number, rotate: number) => {
+    el.style.transform = `translate(${x}px,${y}px) scale(1.06) rotate(${rotate}deg)`
+  }
+
+  const SPRING_FACTOR = 0.3
+
+  const stopSpringLoop = useCallback(() => {
+    if (dragRafRef.current !== null) {
+      cancelAnimationFrame(dragRafRef.current)
+      dragRafRef.current = null
+    }
+    springOffsetRef.current = null
+  }, [])
+
+  const startSpringLoop = useCallback(
+    (id: string) => {
+      const step = () => {
+        const meta = dragMetaRef.current
+        const el = meta && meta.id === id ? findCardEl(id) : null
+        const current = springOffsetRef.current
+        if (!meta || !el || !current) {
+          dragRafRef.current = null
+          return
+        }
+        const target = computeDragOffset(el, lastPointerRef.current.x, lastPointerRef.current.y)
+        if (target) {
+          const nx = current.x + (target.x - current.x) * SPRING_FACTOR
+          const ny = current.y + (target.y - current.y) * SPRING_FACTOR
+          const rotate = Math.max(-8, Math.min(8, (nx - current.x) * 0.6))
+          springOffsetRef.current = { x: nx, y: ny }
+          applyDragTransform(el, nx, ny, rotate)
+        }
+        dragRafRef.current = requestAnimationFrame(step)
+      }
+      dragRafRef.current = requestAnimationFrame(step)
+    },
+    [computeDragOffset, findCardEl],
+  )
 
   useLayoutEffect(() => {
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -141,11 +180,6 @@ function FoodBook({
         })
       }
     }
-
-    if (dragMetaRef.current) {
-      const el = findCardEl(dragMetaRef.current.id)
-      if (el) updateDragTransform(el, lastPointerRef.current.x, lastPointerRef.current.y)
-    }
   })
 
   const handlePointerMove = useCallback(
@@ -153,8 +187,6 @@ function FoodBook({
       const dragging = dragMetaRef.current
       if (!dragging) return
       lastPointerRef.current = { x: e.clientX, y: e.clientY }
-      const el = findCardEl(dragging.id)
-      if (el) updateDragTransform(el, e.clientX, e.clientY)
 
       const under = document.elementFromPoint(e.clientX, e.clientY)
       const cardEl = under instanceof Element ? under.closest<HTMLElement>('[data-food-id]') : null
@@ -171,11 +203,12 @@ function FoodBook({
         return next
       })
     },
-    [setItems, findCardEl, updateDragTransform, captureRects],
+    [setItems, findCardEl, captureRects],
   )
 
   const handlePointerUp = useCallback(() => {
     const meta = dragMetaRef.current
+    stopSpringLoop()
     if (meta) {
       const el = findCardEl(meta.id)
       if (el) {
@@ -192,7 +225,7 @@ function FoodBook({
     setDraggingId(null)
     window.removeEventListener('pointermove', handlePointerMove)
     window.removeEventListener('pointerup', handlePointerUp)
-  }, [findCardEl])
+  }, [findCardEl, stopSpringLoop])
 
   const handleDragHandlePointerDown = (id: string, e: React.PointerEvent) => {
     if (!reorderEnabled) return
@@ -209,10 +242,14 @@ function FoodBook({
     el.style.transition = 'transform 140ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 140ms ease'
     el.style.zIndex = '60'
     el.style.boxShadow = 'var(--shadow-lg)'
-    updateDragTransform(el, e.clientX, e.clientY)
+    const startOffset = computeDragOffset(el, e.clientX, e.clientY) ?? { x: 0, y: 0 }
+    applyDragTransform(el, startOffset.x, startOffset.y, 0)
     setDraggingId(id)
     window.setTimeout(() => {
-      if (dragMetaRef.current?.id === id) el.style.transition = 'none'
+      if (dragMetaRef.current?.id !== id) return
+      el.style.transition = 'none'
+      springOffsetRef.current = startOffset
+      startSpringLoop(id)
     }, 140)
     window.addEventListener('pointermove', handlePointerMove)
     window.addEventListener('pointerup', handlePointerUp)
@@ -222,9 +259,10 @@ function FoodBook({
     return () => {
       window.removeEventListener('pointermove', handlePointerMove)
       window.removeEventListener('pointerup', handlePointerUp)
+      stopSpringLoop()
       if (selectPulseTimerRef.current !== null) window.clearTimeout(selectPulseTimerRef.current)
     }
-  }, [handlePointerMove, handlePointerUp])
+  }, [handlePointerMove, handlePointerUp, stopSpringLoop])
 
   const selectedItems = useMemo(
     () => items.filter((item) => selectedIds.has(item.id)),
