@@ -138,7 +138,6 @@ export function FoodCard({
                     }
               }
             >
-              {sub.imageUrl && <img src={sub.imageUrl} alt={sub.name} />}
               {sub.name}
             </span>
           ))}

@@ -13,7 +13,6 @@ interface FoodModalProps {
   onCancel: () => void
   onDelete: () => void
   onImageUploaded: (id: string, url: string) => void
-  onSubImageUploaded: (id: string, subId: string, url: string) => void
   mergeCandidateCount: number
   onMerge: () => void
 }
@@ -27,7 +26,6 @@ export function FoodModal({
   onCancel,
   onDelete,
   onImageUploaded,
-  onSubImageUploaded,
   mergeCandidateCount,
   onMerge,
 }: FoodModalProps) {
@@ -36,15 +34,11 @@ export function FoodModal({
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState(false)
 
-  const [subUploading, setSubUploading] = useState<Record<string, boolean>>({})
-  const [subPreviews, setSubPreviews] = useState<Record<string, string>>({})
-
   const addSubItem = () => {
     const alreadyHasSelection = draft.subItems.some((sub) => sub.selected)
     const newSubItem: FoodSubItemDraft = {
       id: generateId(),
       name: '',
-      imageUrl: null,
       weight: '',
       protein: '',
       calories: '',
@@ -60,7 +54,6 @@ export function FoodModal({
       const baseSubItem: FoodSubItemDraft = {
         id: generateId(),
         name: draft.name.trim() || '本體',
-        imageUrl: null,
         weight: draft.weight,
         protein: draft.protein,
         calories: draft.calories,
@@ -101,33 +94,6 @@ export function FoodModal({
 
   const removeSubItem = (id: string) => {
     onChange({ ...draft, subItems: draft.subItems.filter((sub) => sub.id !== id) })
-  }
-
-  const removeSubItemPhoto = (id: string) => {
-    updateSubItem(id, { imageUrl: null })
-    setSubPreviews((prev) => {
-      const next = { ...prev }
-      delete next[id]
-      return next
-    })
-  }
-
-  const handleSubFileChange = async (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    setSubPreviews((prev) => ({ ...prev, [id]: URL.createObjectURL(file) }))
-    setSubUploading((prev) => ({ ...prev, [id]: true }))
-    try {
-      const url = await uploadToCloudinary(file)
-      updateSubItem(id, { imageUrl: url })
-      onSubImageUploaded(itemId, id, url)
-    } catch {
-      // keep the local preview; draft.imageUrl stays untouched so a dead
-      // blob: URL never gets persisted to storage
-    } finally {
-      setSubUploading((prev) => ({ ...prev, [id]: false }))
-    }
   }
 
   const hasSubItems = draft.subItems.length > 0
@@ -302,34 +268,6 @@ export function FoodModal({
                       checked={sub.selected}
                       onChange={(e) => selectSubItem(sub.id, e.target.checked)}
                     />
-                    <label className="sub-item-photo">
-                      {sub.imageUrl || subPreviews[sub.id] ? (
-                        <img src={sub.imageUrl ?? subPreviews[sub.id]} alt={sub.name || '子項目照片'} />
-                      ) : (
-                        <Camera size={14} />
-                      )}
-                      {subUploading[sub.id] && <span className="sub-item-photo-uploading">上傳中</span>}
-                      {(sub.imageUrl || subPreviews[sub.id]) && !subUploading[sub.id] && (
-                        <button
-                          type="button"
-                          className="sub-item-photo-remove"
-                          aria-label="移除子項目照片"
-                          onClick={(e) => {
-                            e.preventDefault()
-                            e.stopPropagation()
-                            removeSubItemPhoto(sub.id)
-                          }}
-                        >
-                          <X size={10} />
-                        </button>
-                      )}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        style={{ display: 'none' }}
-                        onChange={(e) => handleSubFileChange(sub.id, e)}
-                      />
-                    </label>
                     <input
                       className="input"
                       value={sub.name}

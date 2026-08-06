@@ -170,7 +170,7 @@ function FoodBook({
     const mergeItems = items.filter((item) => mergeIds.includes(item.id))
     if (
       !window.confirm(
-        `確定要將這 ${mergeItems.length} 項合併進「${base.name}」嗎？合併後個別項目將消失，但照片與數值會保留為子項目。`,
+        `確定要將這 ${mergeItems.length} 項合併進「${base.name}」嗎？合併後個別項目將消失，但數值會保留為子項目。`,
       )
     )
       return
@@ -181,7 +181,6 @@ function FoodBook({
         {
           id: generateId(),
           name: item.name,
-          imageUrl: item.imageUrl,
           weight: item.weight,
           protein: item.protein,
           calories: item.calories,
@@ -219,7 +218,6 @@ function FoodBook({
     const existingSubItems = (item.subItems ?? []).map((sub) => ({
       id: sub.id,
       name: sub.name,
-      imageUrl: sub.imageUrl,
       weight: String(sub.weight),
       protein: String(sub.protein),
       calories: String(sub.calories),
@@ -234,7 +232,6 @@ function FoodBook({
           {
             id: generateId(),
             name: item.name,
-            imageUrl: null,
             weight: String(item.weight),
             protein: String(item.protein),
             calories: String(item.calories),
@@ -286,21 +283,6 @@ function FoodBook({
     )
   }
 
-  const handleSubImageUploaded = (id: string, subId: string, url: string) => {
-    setItems((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              subItems: (item.subItems ?? []).map((sub) =>
-                sub.id === subId ? { ...sub, imageUrl: url } : sub,
-              ),
-            }
-          : item,
-      ),
-    )
-  }
-
   const handleSave = () => {
     if (draft.name.trim().length === 0) return
     const subItems = draft.subItems
@@ -308,7 +290,6 @@ function FoodBook({
       .map((sub) => ({
         id: sub.id,
         name: sub.name.trim(),
-        imageUrl: sub.imageUrl,
         weight: toNumber(sub.weight),
         protein: toNumber(sub.protein),
         calories: toNumber(sub.calories),
@@ -462,7 +443,6 @@ function FoodBook({
           onCancel={closeModal}
           onDelete={() => editingId && deleteItem(editingId)}
           onImageUploaded={handleImageUploaded}
-          onSubImageUploaded={handleSubImageUploaded}
           mergeCandidateCount={mergeCandidateIds.length}
           onMerge={() => editingId && mergeIntoItem(editingId, mergeCandidateIds)}
         />

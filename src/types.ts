@@ -1,7 +1,6 @@
 export interface FoodSubItem {
   id: string
   name: string
-  imageUrl: string | null
   weight: number
   protein: number
   calories: number
@@ -23,7 +22,6 @@ export interface FoodItem {
 export type FoodSubItemDraft = {
   id: string
   name: string
-  imageUrl: string | null
   weight: string
   protein: string
   calories: string

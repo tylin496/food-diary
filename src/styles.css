@@ -474,9 +474,6 @@ body { background: var(--color-bg); }
   padding: 1px 6px 1px 1px;
   transition: opacity 150ms ease, background-color 150ms ease, border-color 150ms ease;
 }
-.food-card .sub-item-chip img {
-  width: 14px; height: 14px; object-fit: cover; flex: none;
-}
 .food-card .sub-item-chip.is-excluded {
   opacity: 0.5; text-decoration: line-through;
 }
@@ -603,22 +600,6 @@ body { background: var(--color-bg); }
 .sub-item-row-top { display: flex; gap: 6px; align-items: center; }
 .sub-item-row-top .input { flex: 1; }
 .sub-item-checkbox { flex: none; width: 16px; height: 16px; cursor: pointer; accent-color: var(--color-accent); }
-.sub-item-photo {
-  position: relative; flex: none; width: 30px; height: 30px;
-  border: 1px dashed var(--color-divider); background: var(--color-surface);
-  display: flex; align-items: center; justify-content: center; overflow: hidden;
-  cursor: pointer; color: color-mix(in srgb, var(--color-text) 55%, transparent);
-}
-.sub-item-photo img { width: 100%; height: 100%; object-fit: cover; }
-.sub-item-photo-uploading {
-  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-  font-size: 8px; text-align: center; background: color-mix(in srgb, var(--color-bg) 70%, transparent);
-}
-.sub-item-photo-remove {
-  position: absolute; top: -5px; right: -5px; width: 14px; height: 14px; padding: 0;
-  display: flex; align-items: center; justify-content: center; border-radius: 50%;
-  background: var(--color-accent); border: 1px solid var(--color-bg); color: #fff; cursor: pointer;
-}
 .sub-item-remove {
   flex: none; width: 30px; height: 30px; padding: 0;
   display: flex; align-items: center; justify-content: center;
