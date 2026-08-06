@@ -1,3 +1,6 @@
+import type { FoodItem } from './types'
+import { getFoodTotals } from './types'
+
 export function toNumber(value: string): number {
   const n = Number(value)
   return Number.isFinite(n) ? n : 0
@@ -5,4 +8,31 @@ export function toNumber(value: string): number {
 
 export function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+}
+
+export function formatItemsAsText(items: FoodItem[]): string {
+  const lines: string[] = []
+  let totalWeight = 0
+  let totalProtein = 0
+  let totalCalories = 0
+
+  items.forEach((item, index) => {
+    const totals = getFoodTotals(item)
+    totalWeight += totals.weight
+    totalProtein += totals.protein
+    totalCalories += totals.calories
+
+    lines.push(`${index + 1}. ${item.name}`)
+    lines.push(`   重量 ${totals.weight}g / 蛋白質 ${totals.protein}g / 熱量 ${totals.calories}kcal`)
+    for (const sub of item.subItems ?? []) {
+      lines.push(`   - ${sub.name}：重量 ${sub.weight}g / 蛋白質 ${sub.protein}g / 熱量 ${sub.calories}kcal`)
+    }
+  })
+
+  if (items.length > 1) {
+    lines.push('')
+    lines.push(`總計：重量 ${totalWeight}g / 蛋白質 ${totalProtein}g / 熱量 ${totalCalories}kcal`)
+  }
+
+  return lines.join('\n')
 }

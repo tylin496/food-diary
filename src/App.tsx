@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Image as ImageIcon, Plus, Search } from 'lucide-react'
 import { useLocalStorage } from './useLocalStorage'
 import type { FoodDraft, FoodItem } from './types'
@@ -6,7 +6,7 @@ import { emptyDraft, getFoodTotals } from './types'
 import { FoodCard } from './components/FoodCard'
 import { SelectionBar } from './components/SelectionBar'
 import { FoodModal } from './components/FoodModal'
-import { generateId, toNumber } from './utils'
+import { formatItemsAsText, generateId, toNumber } from './utils'
 
 const GRAYSCALE_PHOTOS = false
 
@@ -57,6 +57,29 @@ export default function App() {
   }
 
   const clearSelection = () => setSelectedIds(new Set())
+
+  const selectAll = () => setSelectedIds(new Set(filteredItems.map((item) => item.id)))
+
+  const copySelectedAsText = () => {
+    navigator.clipboard.writeText(formatItemsAsText(selectedItems))
+  }
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!(e.key === 'a' || e.key === 'A') || !(e.metaKey || e.ctrlKey)) return
+      const target = e.target as HTMLElement | null
+      const isEditable =
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable)
+      if (isEditable || modalOpen) return
+      e.preventDefault()
+      selectAll()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [filteredItems, modalOpen])
 
   const mergeSelected = () => {
     if (selectedItems.length < 2) return
@@ -146,6 +169,21 @@ export default function App() {
 
   const handleImageUploaded = (id: string, url: string) => {
     setItems((prev) => prev.map((item) => (item.id === id ? { ...item, imageUrl: url } : item)))
+  }
+
+  const handleSubImageUploaded = (id: string, subId: string, url: string) => {
+    setItems((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              subItems: (item.subItems ?? []).map((sub) =>
+                sub.id === subId ? { ...sub, imageUrl: url } : sub,
+              ),
+            }
+          : item,
+      ),
+    )
   }
 
   const handleSave = () => {
@@ -266,6 +304,8 @@ export default function App() {
         totalCalories={totals.calories}
         onClear={clearSelection}
         onMerge={mergeSelected}
+        onCopy={copySelectedAsText}
+        hideMerge={modalOpen && editingId !== null}
       />
 
       {modalOpen && activeId && (
@@ -278,6 +318,7 @@ export default function App() {
           onCancel={closeModal}
           onDelete={() => editingId && deleteItem(editingId)}
           onImageUploaded={handleImageUploaded}
+          onSubImageUploaded={handleSubImageUploaded}
         />
       )}
     </>

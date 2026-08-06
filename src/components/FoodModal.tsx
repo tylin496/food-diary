@@ -13,6 +13,7 @@ interface FoodModalProps {
   onCancel: () => void
   onDelete: () => void
   onImageUploaded: (id: string, url: string) => void
+  onSubImageUploaded: (id: string, subId: string, url: string) => void
 }
 
 export function FoodModal({
@@ -24,6 +25,7 @@ export function FoodModal({
   onCancel,
   onDelete,
   onImageUploaded,
+  onSubImageUploaded,
 }: FoodModalProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [preview, setPreview] = useState<string | null>(draft.imageUrl)
@@ -31,6 +33,7 @@ export function FoodModal({
   const [uploadError, setUploadError] = useState(false)
 
   const [subUploading, setSubUploading] = useState<Record<string, boolean>>({})
+  const [subPreviews, setSubPreviews] = useState<Record<string, string>>({})
 
   const addSubItem = () => {
     const newSubItem: FoodSubItemDraft = {
@@ -84,13 +87,15 @@ export function FoodModal({
     const file = e.target.files?.[0]
     if (!file) return
 
-    updateSubItem(id, { imageUrl: URL.createObjectURL(file) })
+    setSubPreviews((prev) => ({ ...prev, [id]: URL.createObjectURL(file) }))
     setSubUploading((prev) => ({ ...prev, [id]: true }))
     try {
       const url = await uploadToCloudinary(file)
       updateSubItem(id, { imageUrl: url })
+      onSubImageUploaded(itemId, id, url)
     } catch {
-      // keep the local preview; the object URL still shows something to the user
+      // keep the local preview; draft.imageUrl stays untouched so a dead
+      // blob: URL never gets persisted to storage
     } finally {
       setSubUploading((prev) => ({ ...prev, [id]: false }))
     }
@@ -227,8 +232,8 @@ export function FoodModal({
                 <div className="sub-item-row" key={sub.id}>
                   <div className="sub-item-row-top">
                     <label className="sub-item-photo">
-                      {sub.imageUrl ? (
-                        <img src={sub.imageUrl} alt={sub.name || '子項目照片'} />
+                      {sub.imageUrl || subPreviews[sub.id] ? (
+                        <img src={sub.imageUrl ?? subPreviews[sub.id]} alt={sub.name || '子項目照片'} />
                       ) : (
                         <Camera size={14} />
                       )}

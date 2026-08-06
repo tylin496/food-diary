@@ -1,3 +1,5 @@
+import { useState } from 'react'
+
 interface SelectionBarProps {
   count: number
   totalWeight: number
@@ -5,6 +7,8 @@ interface SelectionBarProps {
   totalCalories: number
   onClear: () => void
   onMerge: () => void
+  onCopy: () => void
+  hideMerge: boolean
 }
 
 export function SelectionBar({
@@ -14,8 +18,18 @@ export function SelectionBar({
   totalCalories,
   onClear,
   onMerge,
+  onCopy,
+  hideMerge,
 }: SelectionBarProps) {
+  const [copied, setCopied] = useState(false)
+
   if (count === 0) return null
+
+  const handleCopy = () => {
+    onCopy()
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
+  }
 
   return (
     <div className="selection-bar">
@@ -34,7 +48,10 @@ export function SelectionBar({
           <div className="label">熱量 (kcal)</div>
         </div>
       </div>
-      {count >= 2 && (
+      <button type="button" className="btn btn-clear" onClick={handleCopy}>
+        {copied ? '已複製！' : '複製成文字'}
+      </button>
+      {count >= 2 && !hideMerge && (
         <button type="button" className="btn btn-clear" onClick={onMerge}>
           合併為一筆
         </button>
