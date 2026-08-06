@@ -1,7 +1,8 @@
 import { useRef, useState } from 'react'
-import { Camera, X } from 'lucide-react'
-import type { FoodDraft } from '../types'
+import { Camera, Plus, X } from 'lucide-react'
+import type { FoodDraft, FoodSubItemDraft } from '../types'
 import { uploadToCloudinary } from '../cloudinary'
+import { generateId, toNumber } from '../utils'
 
 interface FoodModalProps {
   itemId: string
@@ -28,6 +29,28 @@ export function FoodModal({
   const [preview, setPreview] = useState<string | null>(draft.imageUrl)
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState(false)
+
+  const addSubItem = () => {
+    const newSubItem: FoodSubItemDraft = { id: generateId(), name: '', weight: '', protein: '', calories: '' }
+    onChange({ ...draft, subItems: [...draft.subItems, newSubItem] })
+  }
+
+  const updateSubItem = (id: string, patch: Partial<FoodSubItemDraft>) => {
+    onChange({
+      ...draft,
+      subItems: draft.subItems.map((sub) => (sub.id === id ? { ...sub, ...patch } : sub)),
+    })
+  }
+
+  const removeSubItem = (id: string) => {
+    onChange({ ...draft, subItems: draft.subItems.filter((sub) => sub.id !== id) })
+  }
+
+  const totalWeight = toNumber(draft.weight) + draft.subItems.reduce((sum, sub) => sum + toNumber(sub.weight), 0)
+  const totalCalories =
+    toNumber(draft.calories) + draft.subItems.reduce((sum, sub) => sum + toNumber(sub.calories), 0)
+  const totalProtein =
+    toNumber(draft.protein) + draft.subItems.reduce((sum, sub) => sum + toNumber(sub.protein), 0)
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -133,6 +156,73 @@ export function FoodModal({
               placeholder="0"
             />
           </div>
+        </div>
+
+        <div className="sub-items-section">
+          <div className="sub-items-header">
+            <span>子項目</span>
+            <button type="button" className="btn-ghost btn-add-subitem" onClick={addSubItem}>
+              <Plus size={14} />
+              新增子項目
+            </button>
+          </div>
+
+          {draft.subItems.length > 0 && (
+            <div className="sub-items">
+              {draft.subItems.map((sub) => (
+                <div className="sub-item-row" key={sub.id}>
+                  <div className="sub-item-row-top">
+                    <input
+                      className="input"
+                      value={sub.name}
+                      onChange={(e) => updateSubItem(sub.id, { name: e.target.value })}
+                      placeholder="例如：加鯛魚"
+                    />
+                    <button
+                      type="button"
+                      className="sub-item-remove"
+                      aria-label="刪除子項目"
+                      onClick={() => removeSubItem(sub.id)}
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                  <div className="sub-item-row-numbers">
+                    <input
+                      className="input"
+                      type="number"
+                      inputMode="decimal"
+                      value={sub.weight}
+                      onChange={(e) => updateSubItem(sub.id, { weight: e.target.value })}
+                      placeholder="重量 (g)"
+                    />
+                    <input
+                      className="input"
+                      type="number"
+                      inputMode="decimal"
+                      value={sub.calories}
+                      onChange={(e) => updateSubItem(sub.id, { calories: e.target.value })}
+                      placeholder="熱量 (kcal)"
+                    />
+                    <input
+                      className="input"
+                      type="number"
+                      inputMode="decimal"
+                      value={sub.protein}
+                      onChange={(e) => updateSubItem(sub.id, { protein: e.target.value })}
+                      placeholder="蛋白質 (g)"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {draft.subItems.length > 0 && (
+            <div className="sub-items-total text-muted">
+              加總：{totalWeight} g・{totalCalories} kcal・{totalProtein} g 蛋白質
+            </div>
+          )}
         </div>
 
         <div className="dialog-actions space-between">

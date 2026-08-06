@@ -1,0 +1,8 @@
+export function toNumber(value: string): number {
+  const n = Number(value)
+  return Number.isFinite(n) ? n : 0
+}
+
+export function generateId(): string {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+}

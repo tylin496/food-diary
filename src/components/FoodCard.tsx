@@ -1,5 +1,6 @@
 import { Camera, Check, Pencil, Trash2 } from 'lucide-react'
 import type { FoodItem } from '../types'
+import { getFoodTotals } from '../types'
 
 interface FoodCardProps {
   item: FoodItem
@@ -11,6 +12,8 @@ interface FoodCardProps {
 }
 
 export function FoodCard({ item, selected, grayscale, onToggle, onEdit, onDelete }: FoodCardProps) {
+  const totals = getFoodTotals(item)
+  const subItems = item.subItems ?? []
   return (
     <div
       role="button"
@@ -60,10 +63,15 @@ export function FoodCard({ item, selected, grayscale, onToggle, onEdit, onDelete
         </div>
       </div>
       <div className="food-name">{item.name}</div>
+      {subItems.length > 0 && (
+        <div className="sub-items-summary">
+          {subItems.map((sub) => `+${sub.name}`).join(' ')}
+        </div>
+      )}
       <div className="meta-row">
-        <span className="tag tag-neutral">{item.weight} g</span>
-        <span className="tag tag-accent">{item.protein} g 蛋白質</span>
-        <span className="tag tag-outline">{item.calories} kcal</span>
+        {totals.weight > 0 && <span className="tag tag-neutral">{totals.weight} g</span>}
+        <span className="tag tag-accent">{totals.protein} g 蛋白質</span>
+        <span className="tag tag-outline">{totals.calories} kcal</span>
       </div>
     </div>
   )

@@ -348,6 +348,11 @@ body { background: var(--color-bg); }
 .food-card .meta-row {
   display: flex; flex-wrap: wrap; gap: 4px;
 }
+.food-card .sub-items-summary {
+  font-size: 11px;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 
 /* — floating selection summary bar — */
 .selection-bar {
@@ -413,6 +418,36 @@ body { background: var(--color-bg); }
   cursor: pointer; padding: var(--space-2) 0;
 }
 .btn-delete-text:hover { text-decoration: underline; }
+
+.sub-items-section { margin-top: var(--space-3); }
+.sub-items-header {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 12px; color: color-mix(in srgb, var(--color-text) 70%, transparent);
+  margin-bottom: var(--space-2);
+}
+.btn-add-subitem { font-size: 12px; padding: 4px var(--space-1); }
+.sub-items { display: flex; flex-direction: column; gap: var(--space-2); }
+.sub-item-row {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: var(--space-2); background: var(--color-bg);
+  border: 1px solid var(--color-divider);
+}
+.sub-item-row-top { display: flex; gap: 6px; align-items: center; }
+.sub-item-row-top .input { flex: 1; }
+.sub-item-remove {
+  flex: none; width: 30px; height: 30px; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: transparent; border: 1px solid var(--color-divider);
+  color: var(--color-text); cursor: pointer;
+}
+.sub-item-remove:hover { background: color-mix(in srgb, var(--color-accent) 10%, transparent); border-color: var(--color-accent); color: var(--color-accent); }
+.sub-item-row-numbers {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+}
+.sub-item-row-numbers .input { font-size: 13px; }
+.sub-items-total {
+  font-size: 12px; margin-top: var(--space-2);
+}
 
 .dialog-close {
   background: transparent; border: none; cursor: pointer;

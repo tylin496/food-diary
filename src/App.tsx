@@ -2,21 +2,13 @@ import { useMemo, useState } from 'react'
 import { Image as ImageIcon, Plus, Search } from 'lucide-react'
 import { useLocalStorage } from './useLocalStorage'
 import type { FoodDraft, FoodItem } from './types'
-import { emptyDraft } from './types'
+import { emptyDraft, getFoodTotals } from './types'
 import { FoodCard } from './components/FoodCard'
 import { SelectionBar } from './components/SelectionBar'
 import { FoodModal } from './components/FoodModal'
+import { generateId, toNumber } from './utils'
 
 const GRAYSCALE_PHOTOS = false
-
-function toNumber(value: string): number {
-  const n = Number(value)
-  return Number.isFinite(n) ? n : 0
-}
-
-function generateId(): string {
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-}
 
 export default function App() {
   const [items, setItems] = useLocalStorage<FoodItem[]>('food-diary:items', [])
@@ -42,11 +34,14 @@ export default function App() {
   const totals = useMemo(
     () =>
       selectedItems.reduce(
-        (acc, item) => ({
-          weight: acc.weight + item.weight,
-          protein: acc.protein + item.protein,
-          calories: acc.calories + item.calories,
-        }),
+        (acc, item) => {
+          const itemTotals = getFoodTotals(item)
+          return {
+            weight: acc.weight + itemTotals.weight,
+            protein: acc.protein + itemTotals.protein,
+            calories: acc.calories + itemTotals.calories,
+          }
+        },
         { weight: 0, protein: 0, calories: 0 },
       ),
     [selectedItems],
@@ -81,6 +76,13 @@ export default function App() {
       weight: String(item.weight),
       protein: String(item.protein),
       calories: String(item.calories),
+      subItems: (item.subItems ?? []).map((sub) => ({
+        id: sub.id,
+        name: sub.name,
+        weight: String(sub.weight),
+        protein: String(sub.protein),
+        calories: String(sub.calories),
+      })),
     })
     setModalOpen(true)
   }
@@ -98,6 +100,15 @@ export default function App() {
 
   const handleSave = () => {
     if (draft.name.trim().length === 0) return
+    const subItems = draft.subItems
+      .filter((sub) => sub.name.trim().length > 0)
+      .map((sub) => ({
+        id: sub.id,
+        name: sub.name.trim(),
+        weight: toNumber(sub.weight),
+        protein: toNumber(sub.protein),
+        calories: toNumber(sub.calories),
+      }))
     if (editingId) {
       setItems((prev) =>
         prev.map((item) =>
@@ -109,6 +120,7 @@ export default function App() {
                 weight: toNumber(draft.weight),
                 protein: toNumber(draft.protein),
                 calories: toNumber(draft.calories),
+                subItems,
               }
             : item,
         ),
@@ -122,6 +134,7 @@ export default function App() {
         protein: toNumber(draft.protein),
         calories: toNumber(draft.calories),
         createdAt: Date.now(),
+        subItems,
       }
       setItems((prev) => [newItem, ...prev])
     }
