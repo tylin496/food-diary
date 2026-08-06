@@ -142,7 +142,17 @@ export function FoodModal({
 
   return (
     <div className={`dialog-backdrop${closing ? ' is-closing' : ''}`}>
-      <div className={`dialog${closing ? ' is-closing' : ''}`} onClick={(e) => e.stopPropagation()}>
+      <div
+        className={`dialog${closing ? ' is-closing' : ''}`}
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => {
+          if (e.key !== 'Enter') return
+          const target = e.target as HTMLElement
+          if (target.tagName === 'TEXTAREA') return
+          e.preventDefault()
+          handleSaveClick()
+        }}
+      >
         <div className="dialog-header">
           <div className="dialog-title">{isEditing ? '編輯紀錄' : '新增紀錄'}</div>
           <button type="button" className="dialog-close" aria-label="關閉" onClick={onCancel}>
