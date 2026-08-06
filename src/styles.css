@@ -61,6 +61,20 @@
   --shadow-sm: 0 1px 2px color-mix(in srgb, #2d2b2b 14%, transparent);
   --shadow-md: 0 3px 10px color-mix(in srgb, #2d2b2b 16%, transparent);
   --shadow-lg: 0 12px 32px color-mix(in srgb, #2d2b2b 22%, transparent);
+
+  /* Motion — bold/playful timing per product direction. prefers-reduced-motion
+     (below) collapses all of this to ~0 as the fallback. */
+  --motion-flip-bold: 420ms cubic-bezier(0.34, 1.61, 0.64, 1);
+  --motion-pop-bold: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --motion-entrance-bold: cubic-bezier(0.22, 1, 0.36, 1);
+  --amp-pop-from: 0.3;
+  --amp-pop-peak: 1.3;
+  --amp-dialog-offset: 30px;
+  --amp-dialog-peak: 1.05;
+  --amp-bar-offset: 46px;
+  --amp-bar-peak: 1.06;
+  --amp-bump-peak: 1.24;
+  --amp-check-peak: 1.38;
 }
 
 /* Dark theme — same tokens, tuned for a dark ground. Applied via
@@ -307,21 +321,36 @@ textarea.input { min-height: 90px; resize: vertical; }
   position: fixed; inset: 0; display: grid; place-items: center;
   padding: var(--space-4);
   background: color-mix(in srgb, var(--color-neutral-900) 50%, transparent);
-  animation: backdrop-in 180ms ease;
+  animation: backdrop-in 200ms ease;
+}
+.dialog-backdrop.is-closing {
+  animation: backdrop-out 180ms ease forwards;
 }
 @keyframes backdrop-in {
   from { opacity: 0; }
   to { opacity: 1; }
 }
+@keyframes backdrop-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
 .dialog {
   width: min(440px, 100%); display: flex; flex-direction: column; gap: var(--space-3);
   padding: var(--space-4); border-radius: var(--radius-lg);
   background: var(--color-surface); box-shadow: var(--shadow-lg);
-  animation: dialog-in 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  animation: dialog-in 480ms var(--motion-entrance-bold);
+}
+.dialog.is-closing {
+  animation: dialog-out 180ms ease forwards;
 }
 @keyframes dialog-in {
-  from { opacity: 0; transform: translateY(12px) scale(0.97); }
-  to { opacity: 1; transform: none; }
+  from { opacity: 0; transform: translateY(var(--amp-dialog-offset)) scale(0.92); }
+  60% { opacity: 1; transform: translateY(-6px) scale(var(--amp-dialog-peak)); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes dialog-out {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translateY(14px) scale(0.95); }
 }
 .dialog-title {
   font-family: var(--font-heading); font-weight: var(--font-heading-weight);
@@ -367,7 +396,11 @@ body { background: var(--color-bg); }
   padding: var(--space-8) var(--space-4);
   animation: fade-in 260ms ease;
 }
-.empty-state svg { opacity: 0.35; margin-bottom: var(--space-2); }
+.empty-state svg { opacity: 0.35; margin-bottom: var(--space-2); animation: float-y 3s ease-in-out infinite; }
+@keyframes float-y {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
 .empty-state h3 { margin-bottom: 0; }
 .empty-state p { max-width: 360px; }
 .no-results {
@@ -394,15 +427,23 @@ body { background: var(--color-bg); }
   font: inherit;
   color: inherit;
   transition: transform 180ms ease, box-shadow 180ms ease, border-color 150ms ease, opacity 180ms ease;
-  animation: card-in 260ms ease both;
+  animation: card-in 520ms var(--motion-entrance-bold) both;
 }
 .food-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
 .food-card:active { transform: translateY(-1px) scale(0.98); }
 .food-card.is-selected { border-color: var(--color-accent); }
-.food-card.is-dragging { opacity: 0.5; transform: none; }
+.food-card.is-dragging { cursor: grabbing; }
+.food-card.is-removing {
+  opacity: 0; transform: scale(0.8);
+  transition: opacity 220ms ease, transform 220ms ease;
+}
 @keyframes card-in {
-  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  from { opacity: 0; transform: translateY(10px) scale(var(--amp-pop-from)) rotate(-3deg); }
   to { opacity: 1; transform: none; }
+}
+@keyframes ring-pulse {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-accent) 55%, transparent); }
+  100% { box-shadow: 0 0 0 12px transparent; }
 }
 .food-card .photo {
   position: relative;
@@ -426,11 +467,12 @@ body { background: var(--color-bg); }
   width: 24px; height: 24px;
   background: var(--color-accent); color: var(--color-bg);
   display: flex; align-items: center; justify-content: center;
-  animation: badge-pop 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: badge-pop 320ms var(--motion-pop-bold);
 }
 @keyframes badge-pop {
-  from { opacity: 0; transform: scale(0.4); }
-  to { opacity: 1; transform: scale(1); }
+  0% { opacity: 0; transform: scale(var(--amp-pop-from)) rotate(-12deg); }
+  60% { opacity: 1; transform: scale(var(--amp-pop-peak)) rotate(4deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0); }
 }
 .food-card .card-actions {
   position: absolute; top: 6px; right: 6px;
@@ -495,14 +537,15 @@ body { background: var(--color-bg); }
   flex-wrap: wrap; justify-content: center;
   box-shadow: var(--shadow-lg);
   max-width: calc(100vw - 32px);
-  animation: bar-in 260ms cubic-bezier(0.16, 1, 0.3, 1);
+  animation: bar-in 480ms var(--motion-entrance-bold);
 }
 .selection-bar.is-leaving {
   animation: bar-out 200ms ease forwards;
 }
 @keyframes bar-in {
-  from { opacity: 0; transform: translate(-50%, 16px); }
-  to { opacity: 1; transform: translate(-50%, 0); }
+  from { opacity: 0; transform: translate(-50%, var(--amp-bar-offset)) scale(0.9); }
+  55% { opacity: 1; transform: translate(-50%, -6px) scale(var(--amp-bar-peak)); }
+  100% { opacity: 1; transform: translate(-50%, 0) scale(1); }
 }
 @keyframes bar-out {
   from { opacity: 1; transform: translate(-50%, 0); }
@@ -511,6 +554,19 @@ body { background: var(--color-bg); }
 .selection-bar .selected-count {
   font-family: var(--font-heading); font-weight: 800; font-size: 14px;
   white-space: nowrap;
+  display: inline-block;
+}
+.selection-bar .selected-count.bump-a { animation: count-bump-a 320ms ease; }
+.selection-bar .selected-count.bump-b { animation: count-bump-b 320ms ease; }
+@keyframes count-bump-a {
+  0% { transform: scale(1); }
+  45% { transform: scale(var(--amp-bump-peak)); }
+  100% { transform: scale(1); }
+}
+@keyframes count-bump-b {
+  0% { transform: scale(1); }
+  45% { transform: scale(var(--amp-bump-peak)); }
+  100% { transform: scale(1); }
 }
 .selection-bar .stats { display: flex; gap: var(--space-6); }
 .selection-bar .stat { text-align: center; }
@@ -567,6 +623,13 @@ body { background: var(--color-bg); }
   cursor: pointer; padding: var(--space-2) 0;
 }
 .btn-delete-text:hover { text-decoration: underline; }
+
+.save-success-icon { animation: check-bounce 500ms var(--motion-pop-bold); }
+@keyframes check-bounce {
+  0% { transform: scale(0.4) rotate(-14deg); opacity: 0; }
+  55% { transform: scale(var(--amp-check-peak)) rotate(6deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
 
 .merge-hint {
   display: flex; align-items: center; justify-content: space-between;

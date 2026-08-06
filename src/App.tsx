@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Image as ImageIcon, LogOut, Plus, Search } from 'lucide-react'
 import { useAuth } from './useAuth'
 import { useTheme } from './useTheme'
@@ -59,16 +59,108 @@ function FoodBook({
 
   const reorderEnabled = isOwner && search.trim().length === 0
   const [draggingId, setDraggingId] = useState<string | null>(null)
-  const dragStateRef = useRef<{ id: string } | null>(null)
+  const [removingIds, setRemovingIds] = useState<Set<string>>(new Set())
+  const [justSelectedId, setJustSelectedId] = useState<string | null>(null)
+  const [modalClosing, setModalClosing] = useState(false)
+
+  const foodGridRef = useRef<HTMLDivElement>(null)
+  const prevRectsRef = useRef<Record<string, DOMRect> | null>(null)
+  const mountDelaysRef = useRef<Map<string, number>>(new Map())
+  const mountDelaysCapturedRef = useRef(false)
+  const dragMetaRef = useRef<{ id: string; grabOffsetX: number; grabOffsetY: number } | null>(null)
+  const lastPointerRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
+  const selectPulseTimerRef = useRef<number | null>(null)
+
+  if (!mountDelaysCapturedRef.current && !itemsLoading) {
+    items.forEach((item, i) => {
+      if (!mountDelaysRef.current.has(item.id)) mountDelaysRef.current.set(item.id, i * 55)
+    })
+    mountDelaysCapturedRef.current = true
+  }
+
+  const findCardEl = useCallback((id: string): HTMLElement | null => {
+    const grid = foodGridRef.current
+    if (!grid) return null
+    return grid.querySelector<HTMLElement>(`[data-food-id="${CSS.escape(id)}"]`)
+  }, [])
+
+  const captureRects = useCallback((excludeId?: string) => {
+    const grid = foodGridRef.current
+    if (!grid) return
+    const rects: Record<string, DOMRect> = {}
+    grid.querySelectorAll<HTMLElement>('[data-food-id]').forEach((el) => {
+      const id = el.dataset.foodId
+      if (id && id !== excludeId) rects[id] = el.getBoundingClientRect()
+    })
+    prevRectsRef.current = rects
+  }, [])
+
+  const updateDragTransform = useCallback((el: HTMLElement, clientX: number, clientY: number) => {
+    const meta = dragMetaRef.current
+    if (!meta) return
+    const saved = el.style.transform
+    el.style.transform = ''
+    const rect = el.getBoundingClientRect()
+    el.style.transform = saved
+    const dx = clientX - meta.grabOffsetX - rect.left
+    const dy = clientY - meta.grabOffsetY - rect.top
+    el.style.transform = `translate(${dx}px,${dy}px) scale(1.06) rotate(${dx > 0 ? 2 : -2}deg)`
+  }, [])
+
+  useLayoutEffect(() => {
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (prevRectsRef.current) {
+      const rects = prevRectsRef.current
+      prevRectsRef.current = null
+      const dragId = dragMetaRef.current?.id
+      if (!reducedMotion) {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            Object.keys(rects).forEach((id) => {
+              if (id === dragId) return
+              const el = findCardEl(id)
+              if (!el) return
+              const prev = rects[id]
+              const now = el.getBoundingClientRect()
+              const dx = prev.left - now.left
+              const dy = prev.top - now.top
+              if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return
+              el.style.transition = 'none'
+              el.style.transform = `translate(${dx}px,${dy}px)`
+              requestAnimationFrame(() => {
+                el.style.transition = 'transform var(--motion-flip-bold)'
+                el.style.transform = ''
+                const handleEnd = () => {
+                  el.style.transition = ''
+                  el.removeEventListener('transitionend', handleEnd)
+                }
+                el.addEventListener('transitionend', handleEnd)
+              })
+            })
+          })
+        })
+      }
+    }
+
+    if (dragMetaRef.current) {
+      const el = findCardEl(dragMetaRef.current.id)
+      if (el) updateDragTransform(el, lastPointerRef.current.x, lastPointerRef.current.y)
+    }
+  })
 
   const handlePointerMove = useCallback(
     (e: PointerEvent) => {
-      const dragging = dragStateRef.current
+      const dragging = dragMetaRef.current
       if (!dragging) return
-      const el = document.elementFromPoint(e.clientX, e.clientY)
-      const cardEl = el instanceof Element ? el.closest<HTMLElement>('[data-food-id]') : null
+      lastPointerRef.current = { x: e.clientX, y: e.clientY }
+      const el = findCardEl(dragging.id)
+      if (el) updateDragTransform(el, e.clientX, e.clientY)
+
+      const under = document.elementFromPoint(e.clientX, e.clientY)
+      const cardEl = under instanceof Element ? under.closest<HTMLElement>('[data-food-id]') : null
       const targetId = cardEl?.dataset.foodId
       if (!targetId || targetId === dragging.id) return
+      captureRects(dragging.id)
       setItems((prev) => {
         const fromIndex = prev.findIndex((item) => item.id === dragging.id)
         const toIndex = prev.findIndex((item) => item.id === targetId)
@@ -79,20 +171,45 @@ function FoodBook({
         return next
       })
     },
-    [setItems],
+    [setItems, findCardEl, updateDragTransform, captureRects],
   )
 
   const handlePointerUp = useCallback(() => {
-    dragStateRef.current = null
+    const meta = dragMetaRef.current
+    if (meta) {
+      const el = findCardEl(meta.id)
+      if (el) {
+        el.style.transition = 'transform var(--motion-flip-bold)'
+        el.style.transform = ''
+        window.setTimeout(() => {
+          el.style.boxShadow = ''
+          el.style.zIndex = ''
+          el.style.transition = ''
+        }, 340)
+      }
+    }
+    dragMetaRef.current = null
     setDraggingId(null)
     window.removeEventListener('pointermove', handlePointerMove)
     window.removeEventListener('pointerup', handlePointerUp)
-  }, [handlePointerMove])
+  }, [findCardEl])
 
   const handleDragHandlePointerDown = (id: string, e: React.PointerEvent) => {
     if (!reorderEnabled) return
     e.preventDefault()
-    dragStateRef.current = { id }
+    const el = findCardEl(id)
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    dragMetaRef.current = {
+      id,
+      grabOffsetX: e.clientX - rect.left,
+      grabOffsetY: e.clientY - rect.top,
+    }
+    lastPointerRef.current = { x: e.clientX, y: e.clientY }
+    el.style.transition = 'none'
+    el.style.zIndex = '60'
+    el.style.boxShadow = 'var(--shadow-lg)'
+    updateDragTransform(el, e.clientX, e.clientY)
     setDraggingId(id)
     window.addEventListener('pointermove', handlePointerMove)
     window.addEventListener('pointerup', handlePointerUp)
@@ -102,6 +219,7 @@ function FoodBook({
     return () => {
       window.removeEventListener('pointermove', handlePointerMove)
       window.removeEventListener('pointerup', handlePointerUp)
+      if (selectPulseTimerRef.current !== null) window.clearTimeout(selectPulseTimerRef.current)
     }
   }, [handlePointerMove, handlePointerUp])
 
@@ -126,12 +244,18 @@ function FoodBook({
   )
 
   const toggleSelect = (id: string) => {
+    const wasSelected = selectedIds.has(id)
     setSelectedIds((prev) => {
       const next = new Set(prev)
       if (next.has(id)) next.delete(id)
       else next.add(id)
       return next
     })
+    if (!wasSelected) {
+      setJustSelectedId(id)
+      if (selectPulseTimerRef.current !== null) window.clearTimeout(selectPulseTimerRef.current)
+      selectPulseTimerRef.current = window.setTimeout(() => setJustSelectedId(null), 600)
+    }
   }
 
   const clearSelection = () => setSelectedIds(new Set())
@@ -254,10 +378,15 @@ function FoodBook({
   }
 
   const closeModal = () => {
-    setModalOpen(false)
-    setEditingId(null)
-    setActiveId(null)
-    setDraft(emptyDraft)
+    if (modalClosing) return
+    setModalClosing(true)
+    window.setTimeout(() => {
+      setModalOpen(false)
+      setModalClosing(false)
+      setEditingId(null)
+      setActiveId(null)
+      setDraft(emptyDraft)
+    }, 180)
   }
 
   const handleImageUploaded = (id: string, url: string) => {
@@ -295,6 +424,7 @@ function FoodBook({
         calories: toNumber(sub.calories),
         selected: sub.selected,
       }))
+    captureRects()
     if (editingId) {
       setItems((prev) =>
         prev.map((item) =>
@@ -332,14 +462,24 @@ function FoodBook({
   const deleteItem = (id: string) => {
     if (!isOwner) return
     if (!window.confirm('確定要刪除這筆紀錄嗎？')) return
-    setItems((prev) => prev.filter((item) => item.id !== id))
-    setSelectedIds((prev) => {
-      if (!prev.has(id)) return prev
-      const next = new Set(prev)
-      next.delete(id)
-      return next
-    })
     if (editingId === id) closeModal()
+    if (removingIds.has(id)) return
+    setRemovingIds((prev) => new Set(prev).add(id))
+    window.setTimeout(() => {
+      captureRects(id)
+      setItems((prev) => prev.filter((item) => item.id !== id))
+      setSelectedIds((prev) => {
+        if (!prev.has(id)) return prev
+        const next = new Set(prev)
+        next.delete(id)
+        return next
+      })
+      setRemovingIds((prev) => {
+        const next = new Set(prev)
+        next.delete(id)
+        return next
+      })
+    }, 230)
   }
 
   const mergeCandidateIds = editingId
@@ -357,7 +497,10 @@ function FoodBook({
           <Search size={18} />
           <input
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              captureRects()
+              setSearch(e.target.value)
+            }}
             placeholder="搜尋食物名稱"
           />
         </div>
@@ -404,7 +547,7 @@ function FoodBook({
         )}
 
         {hasAnyItems && hasResults && (
-          <div className="food-grid">
+          <div className="food-grid" ref={foodGridRef}>
             {filteredItems.map((item) => (
               <FoodCard
                 key={item.id}
@@ -414,6 +557,9 @@ function FoodBook({
                 readOnly={!isOwner}
                 reorderEnabled={reorderEnabled}
                 dragging={draggingId === item.id}
+                mountDelay={mountDelaysRef.current.get(item.id) ?? 0}
+                removing={removingIds.has(item.id)}
+                justSelected={item.id === justSelectedId}
                 onToggle={toggleSelect}
                 onEdit={openEditModal}
                 onToggleSubItem={toggleSubItemSelected}
@@ -438,6 +584,7 @@ function FoodBook({
           itemId={activeId}
           draft={draft}
           isEditing={editingId !== null}
+          closing={modalClosing}
           onChange={setDraft}
           onSave={handleSave}
           onCancel={closeModal}

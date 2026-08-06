@@ -13,6 +13,9 @@ interface FoodCardProps {
   readOnly: boolean
   reorderEnabled: boolean
   dragging: boolean
+  mountDelay: number
+  removing: boolean
+  justSelected: boolean
   onToggle: (id: string) => void
   onEdit: (id: string) => void
   onToggleSubItem: (id: string, subId: string) => void
@@ -26,6 +29,9 @@ export function FoodCard({
   readOnly,
   reorderEnabled,
   dragging,
+  mountDelay,
+  removing,
+  justSelected,
   onToggle,
   onEdit,
   onToggleSubItem,
@@ -65,12 +71,17 @@ export function FoodCard({
     }
   }
 
+  const animation = `card-in 520ms var(--motion-entrance-bold) ${mountDelay}ms both${
+    justSelected ? ', ring-pulse 550ms ease' : ''
+  }`
+
   return (
     <div
       role="button"
       tabIndex={0}
       data-food-id={item.id}
-      className={`food-card${selected ? ' is-selected' : ''}${dragging ? ' is-dragging' : ''}`}
+      className={`food-card${selected ? ' is-selected' : ''}${dragging ? ' is-dragging' : ''}${removing ? ' is-removing' : ''}`}
+      style={{ animation }}
       onClick={() => {
         if (longPressFired.current) {
           longPressFired.current = false

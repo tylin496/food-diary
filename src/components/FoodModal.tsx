@@ -1,5 +1,5 @@
-import { useRef, useState } from 'react'
-import { Camera, Plus, X } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Camera, Check, Plus, X } from 'lucide-react'
 import type { FoodDraft, FoodSubItemDraft } from '../types'
 import { uploadToCloudinary } from '../cloudinary'
 import { generateId, toNumber } from '../utils'
@@ -8,6 +8,7 @@ interface FoodModalProps {
   itemId: string
   draft: FoodDraft
   isEditing: boolean
+  closing: boolean
   onChange: (draft: FoodDraft) => void
   onSave: () => void
   onCancel: () => void
@@ -21,6 +22,7 @@ export function FoodModal({
   itemId,
   draft,
   isEditing,
+  closing,
   onChange,
   onSave,
   onCancel,
@@ -33,6 +35,20 @@ export function FoodModal({
   const [preview, setPreview] = useState<string | null>(draft.imageUrl)
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState(false)
+  const [saveState, setSaveState] = useState<'idle' | 'success'>('idle')
+  const saveTimerRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (saveTimerRef.current !== null) window.clearTimeout(saveTimerRef.current)
+    }
+  }, [])
+
+  const handleSaveClick = () => {
+    if (draft.name.trim().length === 0 || saveState === 'success') return
+    setSaveState('success')
+    saveTimerRef.current = window.setTimeout(() => onSave(), 560)
+  }
 
   const addSubItem = () => {
     const alreadyHasSelection = draft.subItems.some((sub) => sub.selected)
@@ -125,8 +141,8 @@ export function FoodModal({
   }
 
   return (
-    <div className="dialog-backdrop">
-      <div className="dialog" onClick={(e) => e.stopPropagation()}>
+    <div className={`dialog-backdrop${closing ? ' is-closing' : ''}`}>
+      <div className={`dialog${closing ? ' is-closing' : ''}`} onClick={(e) => e.stopPropagation()}>
         <div className="dialog-header">
           <div className="dialog-title">{isEditing ? '編輯紀錄' : '新增紀錄'}</div>
           <button type="button" className="dialog-close" aria-label="關閉" onClick={onCancel}>
@@ -327,14 +343,21 @@ export function FoodModal({
             <button type="button" className="btn btn-secondary" onClick={onCancel}>
               取消
             </button>
-            <button
-              type="button"
-              className="btn btn-primary"
-              disabled={draft.name.trim().length === 0}
-              onClick={onSave}
-            >
-              儲存
-            </button>
+            {saveState === 'idle' ? (
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={draft.name.trim().length === 0}
+                onClick={handleSaveClick}
+              >
+                儲存
+              </button>
+            ) : (
+              <button type="button" className="btn btn-primary" disabled>
+                <Check size={16} className="save-success-icon" strokeWidth={3} />
+                已儲存
+              </button>
+            )}
           </div>
         </div>
       </div>
