@@ -66,7 +66,10 @@ export default function App() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!(e.key === 'a' || e.key === 'A') || !(e.metaKey || e.ctrlKey)) return
+      if (!(e.metaKey || e.ctrlKey)) return
+      const isSelectAll = e.key === 'a' || e.key === 'A'
+      const isDeselect = e.key === 'd' || e.key === 'D'
+      if (!isSelectAll && !isDeselect) return
       const target = e.target as HTMLElement | null
       const isEditable =
         target &&
@@ -75,7 +78,8 @@ export default function App() {
           target.isContentEditable)
       if (isEditable || modalOpen) return
       e.preventDefault()
-      selectAll()
+      if (isSelectAll) selectAll()
+      else clearSelection()
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
