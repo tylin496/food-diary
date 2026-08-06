@@ -8,6 +8,7 @@ import { emptyDraft, getFoodTotals } from './types'
 import { FoodCard } from './components/FoodCard'
 import { SelectionBar } from './components/SelectionBar'
 import { FoodModal } from './components/FoodModal'
+import { SubItemPicker } from './components/SubItemPicker'
 import { formatItemsAsText, generateId, toNumber } from './utils'
 
 const GRAYSCALE_PHOTOS = false
@@ -62,6 +63,7 @@ function FoodBook({
   const [removingIds, setRemovingIds] = useState<Set<string>>(new Set())
   const [justSelectedId, setJustSelectedId] = useState<string | null>(null)
   const [modalClosing, setModalClosing] = useState(false)
+  const [pickerItemId, setPickerItemId] = useState<string | null>(null)
 
   const foodGridRef = useRef<HTMLDivElement>(null)
   const prevRectsRef = useRef<Record<string, DOMRect> | null>(null)
@@ -284,6 +286,41 @@ function FoodBook({
     [selectedItems],
   )
 
+  // Cards with more than one sub-item ask which ones to count before being
+  // selected; everything else selects straight away.
+  const handleCardToggle = (id: string) => {
+    if (selectedIds.has(id)) {
+      toggleSelect(id)
+      return
+    }
+    const item = items.find((candidate) => candidate.id === id)
+    if ((item?.subItems?.length ?? 0) > 1) {
+      setPickerItemId(id)
+      return
+    }
+    toggleSelect(id)
+  }
+
+  const confirmPicker = (chosenIds: string[]) => {
+    const id = pickerItemId
+    setPickerItemId(null)
+    if (id === null) return
+    const chosen = new Set(chosenIds)
+    setItems((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              subItems: (item.subItems ?? []).map((sub) => ({ ...sub, selected: chosen.has(sub.id) })),
+            }
+          : item,
+      ),
+    )
+    if (!selectedIds.has(id)) toggleSelect(id)
+  }
+
+  const pickerItem = pickerItemId === null ? null : (items.find((item) => item.id === pickerItemId) ?? null)
+
   const toggleSelect = (id: string) => {
     const wasSelected = selectedIds.has(id)
     setSelectedIds((prev) => {
@@ -413,7 +450,6 @@ function FoodBook({
       protein: shouldSplitBase ? '0' : String(item.protein),
       calories: shouldSplitBase ? '0' : String(item.calories),
       subItems,
-      subItemsExclusive: item.subItemsExclusive ?? false,
     })
     setModalOpen(true)
   }
@@ -441,13 +477,9 @@ function FoodBook({
         const subItems = item.subItems ?? []
         return {
           ...item,
-          subItems: item.subItemsExclusive
-            ? subItems.map((sub) =>
-                sub.id === subId ? { ...sub, selected: sub.selected === false } : { ...sub, selected: false },
-              )
-            : subItems.map((sub) =>
-                sub.id === subId ? { ...sub, selected: sub.selected === false } : sub,
-              ),
+          subItems: subItems.map((sub) =>
+            sub.id === subId ? { ...sub, selected: sub.selected === false } : sub,
+          ),
         }
       }),
     )
@@ -478,7 +510,6 @@ function FoodBook({
                 protein: toNumber(draft.protein),
                 calories: toNumber(draft.calories),
                 subItems,
-                subItemsExclusive: draft.subItemsExclusive,
               }
             : item,
         ),
@@ -493,7 +524,6 @@ function FoodBook({
         calories: toNumber(draft.calories),
         createdAt: Date.now(),
         subItems,
-        subItemsExclusive: draft.subItemsExclusive,
       }
       setItems((prev) => [newItem, ...prev])
     }
@@ -601,7 +631,7 @@ function FoodBook({
                 mountDelay={mountDelaysRef.current.get(item.id) ?? 0}
                 removing={removingIds.has(item.id)}
                 justSelected={item.id === justSelectedId}
-                onToggle={toggleSelect}
+                onToggle={handleCardToggle}
                 onEdit={openEditModal}
                 onToggleSubItem={toggleSubItemSelected}
                 onDragHandlePointerDown={handleDragHandlePointerDown}
@@ -619,6 +649,14 @@ function FoodBook({
         onClear={clearSelection}
         onCopy={copySelectedAsText}
       />
+
+      {pickerItem && (
+        <SubItemPicker
+          item={pickerItem}
+          onConfirm={confirmPicker}
+          onCancel={() => setPickerItemId(null)}
+        />
+      )}
 
       {modalOpen && activeId && (
         <FoodModal

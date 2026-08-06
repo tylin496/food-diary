@@ -51,14 +51,13 @@ export function FoodModal({
   }
 
   const addSubItem = () => {
-    const alreadyHasSelection = draft.subItems.some((sub) => sub.selected)
     const newSubItem: FoodSubItemDraft = {
       id: generateId(),
       name: '',
       weight: '',
       protein: '',
       calories: '',
-      selected: draft.subItemsExclusive ? !alreadyHasSelection : true,
+      selected: true,
     }
 
     // First sub-item: split the manually-entered base numbers out into their
@@ -96,15 +95,6 @@ export function FoodModal({
   }
 
   const selectSubItem = (id: string, selected: boolean) => {
-    if (draft.subItemsExclusive) {
-      onChange({
-        ...draft,
-        subItems: draft.subItems.map((sub) =>
-          sub.id === id ? { ...sub, selected } : { ...sub, selected: false },
-        ),
-      })
-      return
-    }
     updateSubItem(id, { selected })
   }
 
@@ -113,8 +103,7 @@ export function FoodModal({
   }
 
   const hasSubItems = draft.subItems.length > 0
-  const activeSubItems = draft.subItems.filter((sub) => sub.selected)
-  const selectedSubItems = draft.subItemsExclusive ? activeSubItems.slice(0, 1) : activeSubItems
+  const selectedSubItems = draft.subItems.filter((sub) => sub.selected)
   const totalWeight =
     toNumber(draft.weight) + selectedSubItems.reduce((sum, sub) => sum + toNumber(sub.weight), 0)
   const totalCalories =
@@ -256,39 +245,13 @@ export function FoodModal({
             </button>
           </div>
 
-          {hasSubItems && (
-            <label className="sub-items-exclusive-toggle">
-              <input
-                type="checkbox"
-                checked={draft.subItemsExclusive}
-                onChange={(e) => {
-                  const subItemsExclusive = e.target.checked
-                  if (!subItemsExclusive) {
-                    onChange({ ...draft, subItemsExclusive })
-                    return
-                  }
-                  const firstSelectedId = draft.subItems.find((sub) => sub.selected)?.id
-                  onChange({
-                    ...draft,
-                    subItemsExclusive,
-                    subItems: draft.subItems.map((sub) => ({
-                      ...sub,
-                      selected: sub.id === firstSelectedId,
-                    })),
-                  })
-                }}
-              />
-              互斥選項（例如份量大小，一次只計入一項）
-            </label>
-          )}
-
           {draft.subItems.length > 0 && (
             <div className="sub-items">
               {draft.subItems.map((sub) => (
                 <div className={`sub-item-row${sub.selected ? '' : ' is-excluded'}`} key={sub.id}>
                   <div className="sub-item-row-top">
                     <input
-                      type={draft.subItemsExclusive ? 'radio' : 'checkbox'}
+                      type="checkbox"
                       className="sub-item-checkbox"
                       aria-label={sub.selected ? '取消計入加總' : '計入加總'}
                       checked={sub.selected}
