@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Check, Copy } from 'lucide-react'
 
 interface SelectionBarProps {
@@ -19,8 +19,20 @@ export function SelectionBar({
   onCopy,
 }: SelectionBarProps) {
   const [copied, setCopied] = useState(false)
+  const visible = count > 0
+  const [rendered, setRendered] = useState(visible)
 
-  if (count === 0) return null
+  useEffect(() => {
+    if (visible) {
+      setRendered(true)
+      return
+    }
+    if (!rendered) return
+    const timer = setTimeout(() => setRendered(false), 200)
+    return () => clearTimeout(timer)
+  }, [visible, rendered])
+
+  if (!rendered) return null
 
   const handleCopy = () => {
     onCopy()
@@ -29,7 +41,7 @@ export function SelectionBar({
   }
 
   return (
-    <div className="selection-bar">
+    <div className={`selection-bar${visible ? '' : ' is-leaving'}`}>
       <div className="selected-count">已選 {count} 項</div>
       <div className="stats">
         <div className="stat">
@@ -45,7 +57,12 @@ export function SelectionBar({
           <div className="label">熱量 (kcal)</div>
         </div>
       </div>
-      <button type="button" className="btn btn-clear btn-icon" onClick={handleCopy} aria-label={copied ? '已複製' : '複製成文字'}>
+      <button
+        type="button"
+        className={`btn btn-clear btn-icon${copied ? ' is-copied' : ''}`}
+        onClick={handleCopy}
+        aria-label={copied ? '已複製' : '複製成文字'}
+      >
         {copied ? <Check size={16} /> : <Copy size={16} />}
       </button>
       <button type="button" className="btn btn-clear" onClick={onClear}>
