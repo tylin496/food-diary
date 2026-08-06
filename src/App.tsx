@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Image as ImageIcon, Plus, Search } from 'lucide-react'
-import { useLocalStorage } from './useLocalStorage'
+import { Image as ImageIcon, LogOut, Plus, Search } from 'lucide-react'
+import { useAuth } from './useAuth'
+import { useCloudItems } from './useCloudItems'
 import type { FoodDraft, FoodItem } from './types'
 import { emptyDraft, getFoodTotals } from './types'
 import { FoodCard } from './components/FoodCard'
@@ -11,7 +12,28 @@ import { formatItemsAsText, generateId, toNumber } from './utils'
 const GRAYSCALE_PHOTOS = false
 
 export default function App() {
-  const [items, setItems] = useLocalStorage<FoodItem[]>('food-diary:items', [])
+  const { user, loading: authLoading, signIn, logOut } = useAuth()
+
+  if (authLoading) return null
+
+  if (!user) {
+    return (
+      <div className="empty-state" style={{ minHeight: '100vh' }}>
+        <ImageIcon size={48} />
+        <h3>食物熱量記錄</h3>
+        <p className="text-muted">用 Google 帳號登入，紀錄會永久保存並跨裝置同步</p>
+        <button type="button" className="btn btn-primary" onClick={signIn}>
+          使用 Google 登入
+        </button>
+      </div>
+    )
+  }
+
+  return <FoodDiary uid={user.uid} userLabel={user.displayName ?? user.email ?? ''} onLogOut={logOut} />
+}
+
+function FoodDiary({ uid, userLabel, onLogOut }: { uid: string; userLabel: string; onLogOut: () => void }) {
+  const [items, setItems, itemsLoading] = useCloudItems(uid)
   const [search, setSearch] = useState('')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
@@ -324,10 +346,19 @@ export default function App() {
           <Plus size={16} />
           新增食物
         </button>
+        <button
+          type="button"
+          className="btn btn-secondary btn-icon"
+          title={`登出 ${userLabel}`}
+          onClick={onLogOut}
+        >
+          <LogOut size={16} />
+        </button>
       </nav>
 
       <main className="main">
-        {!hasAnyItems && (
+        {itemsLoading && !hasAnyItems && <div className="no-results">同步中…</div>}
+        {!itemsLoading && !hasAnyItems && (
           <div className="empty-state">
             <ImageIcon size={48} />
             <h3>還沒有任何紀錄</h3>
