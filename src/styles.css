@@ -349,9 +349,17 @@ body { background: var(--color-bg); }
   display: flex; flex-wrap: wrap; gap: 4px;
 }
 .food-card .sub-items-summary {
+  display: flex; flex-wrap: wrap; gap: 4px;
+}
+.food-card .sub-item-chip {
+  display: inline-flex; align-items: center; gap: 4px;
   font-size: 11px;
-  color: color-mix(in srgb, var(--color-text) 55%, transparent);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  color: color-mix(in srgb, var(--color-text) 65%, transparent);
+  background: var(--color-neutral-100);
+  padding: 2px 6px 2px 2px;
+}
+.food-card .sub-item-chip img {
+  width: 16px; height: 16px; object-fit: cover; flex: none;
 }
 
 /* — floating selection summary bar — */
@@ -434,6 +442,17 @@ body { background: var(--color-bg); }
 }
 .sub-item-row-top { display: flex; gap: 6px; align-items: center; }
 .sub-item-row-top .input { flex: 1; }
+.sub-item-photo {
+  position: relative; flex: none; width: 30px; height: 30px;
+  border: 1px dashed var(--color-divider); background: var(--color-surface);
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+  cursor: pointer; color: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+.sub-item-photo img { width: 100%; height: 100%; object-fit: cover; }
+.sub-item-photo-uploading {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 8px; text-align: center; background: color-mix(in srgb, var(--color-bg) 70%, transparent);
+}
 .sub-item-remove {
   flex: none; width: 30px; height: 30px; padding: 0;
   display: flex; align-items: center; justify-content: center;

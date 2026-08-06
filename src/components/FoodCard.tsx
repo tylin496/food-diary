@@ -65,7 +65,12 @@ export function FoodCard({ item, selected, grayscale, onToggle, onEdit, onDelete
       <div className="food-name">{item.name}</div>
       {subItems.length > 0 && (
         <div className="sub-items-summary">
-          {subItems.map((sub) => `+${sub.name}`).join(' ')}
+          {subItems.map((sub) => (
+            <span className="sub-item-chip" key={sub.id}>
+              {sub.imageUrl && <img src={sub.imageUrl} alt={sub.name} />}
+              {sub.name}
+            </span>
+          ))}
         </div>
       )}
       <div className="meta-row">

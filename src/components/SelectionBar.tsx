@@ -4,9 +4,17 @@ interface SelectionBarProps {
   totalProtein: number
   totalCalories: number
   onClear: () => void
+  onMerge: () => void
 }
 
-export function SelectionBar({ count, totalWeight, totalProtein, totalCalories, onClear }: SelectionBarProps) {
+export function SelectionBar({
+  count,
+  totalWeight,
+  totalProtein,
+  totalCalories,
+  onClear,
+  onMerge,
+}: SelectionBarProps) {
   if (count === 0) return null
 
   return (
@@ -26,6 +34,11 @@ export function SelectionBar({ count, totalWeight, totalProtein, totalCalories, 
           <div className="label">熱量 (kcal)</div>
         </div>
       </div>
+      {count >= 2 && (
+        <button type="button" className="btn btn-clear" onClick={onMerge}>
+          合併為一筆
+        </button>
+      )}
       <button type="button" className="btn btn-clear" onClick={onClear}>
         清除選取
       </button>

@@ -58,6 +58,35 @@ export default function App() {
 
   const clearSelection = () => setSelectedIds(new Set())
 
+  const mergeSelected = () => {
+    if (selectedItems.length < 2) return
+    if (!window.confirm(`確定要將這 ${selectedItems.length} 項合併成一筆紀錄嗎？合併後個別項目將消失，但照片與數值會保留為子項目。`)) return
+
+    const [base, ...rest] = selectedItems
+    const mergedSubItems = [
+      ...(base.subItems ?? []),
+      ...rest.flatMap((item) => [
+        {
+          id: generateId(),
+          name: item.name,
+          imageUrl: item.imageUrl,
+          weight: item.weight,
+          protein: item.protein,
+          calories: item.calories,
+        },
+        ...(item.subItems ?? []),
+      ]),
+    ]
+    const removeIds = new Set(rest.map((item) => item.id))
+
+    setItems((prev) =>
+      prev
+        .filter((item) => !removeIds.has(item.id))
+        .map((item) => (item.id === base.id ? { ...item, subItems: mergedSubItems } : item)),
+    )
+    setSelectedIds(new Set())
+  }
+
   const openAddModal = () => {
     setEditingId(null)
     setActiveId(generateId())
@@ -79,6 +108,7 @@ export default function App() {
       subItems: (item.subItems ?? []).map((sub) => ({
         id: sub.id,
         name: sub.name,
+        imageUrl: sub.imageUrl,
         weight: String(sub.weight),
         protein: String(sub.protein),
         calories: String(sub.calories),
@@ -105,6 +135,7 @@ export default function App() {
       .map((sub) => ({
         id: sub.id,
         name: sub.name.trim(),
+        imageUrl: sub.imageUrl,
         weight: toNumber(sub.weight),
         protein: toNumber(sub.protein),
         calories: toNumber(sub.calories),
@@ -214,6 +245,7 @@ export default function App() {
         totalProtein={totals.protein}
         totalCalories={totals.calories}
         onClear={clearSelection}
+        onMerge={mergeSelected}
       />
 
       {modalOpen && activeId && (

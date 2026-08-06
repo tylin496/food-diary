@@ -30,8 +30,17 @@ export function FoodModal({
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState(false)
 
+  const [subUploading, setSubUploading] = useState<Record<string, boolean>>({})
+
   const addSubItem = () => {
-    const newSubItem: FoodSubItemDraft = { id: generateId(), name: '', weight: '', protein: '', calories: '' }
+    const newSubItem: FoodSubItemDraft = {
+      id: generateId(),
+      name: '',
+      imageUrl: null,
+      weight: '',
+      protein: '',
+      calories: '',
+    }
     onChange({ ...draft, subItems: [...draft.subItems, newSubItem] })
   }
 
@@ -44,6 +53,22 @@ export function FoodModal({
 
   const removeSubItem = (id: string) => {
     onChange({ ...draft, subItems: draft.subItems.filter((sub) => sub.id !== id) })
+  }
+
+  const handleSubFileChange = async (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    updateSubItem(id, { imageUrl: URL.createObjectURL(file) })
+    setSubUploading((prev) => ({ ...prev, [id]: true }))
+    try {
+      const url = await uploadToCloudinary(file)
+      updateSubItem(id, { imageUrl: url })
+    } catch {
+      // keep the local preview; the object URL still shows something to the user
+    } finally {
+      setSubUploading((prev) => ({ ...prev, [id]: false }))
+    }
   }
 
   const totalWeight = toNumber(draft.weight) + draft.subItems.reduce((sum, sub) => sum + toNumber(sub.weight), 0)
@@ -172,6 +197,20 @@ export function FoodModal({
               {draft.subItems.map((sub) => (
                 <div className="sub-item-row" key={sub.id}>
                   <div className="sub-item-row-top">
+                    <label className="sub-item-photo">
+                      {sub.imageUrl ? (
+                        <img src={sub.imageUrl} alt={sub.name || '子項目照片'} />
+                      ) : (
+                        <Camera size={14} />
+                      )}
+                      {subUploading[sub.id] && <span className="sub-item-photo-uploading">上傳中</span>}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        onChange={(e) => handleSubFileChange(sub.id, e)}
+                      />
+                    </label>
                     <input
                       className="input"
                       value={sub.name}
