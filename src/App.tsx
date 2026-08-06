@@ -14,6 +14,10 @@ function toNumber(value: string): number {
   return Number.isFinite(n) ? n : 0
 }
 
+function generateId(): string {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+}
+
 export default function App() {
   const [items, setItems] = useLocalStorage<FoodItem[]>('food-diary:items', [])
   const [search, setSearch] = useState('')
@@ -21,6 +25,7 @@ export default function App() {
 
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [activeId, setActiveId] = useState<string | null>(null)
   const [draft, setDraft] = useState<FoodDraft>(emptyDraft)
 
   const filteredItems = useMemo(() => {
@@ -60,6 +65,7 @@ export default function App() {
 
   const openAddModal = () => {
     setEditingId(null)
+    setActiveId(generateId())
     setDraft(emptyDraft)
     setModalOpen(true)
   }
@@ -68,6 +74,7 @@ export default function App() {
     const item = items.find((i) => i.id === id)
     if (!item) return
     setEditingId(id)
+    setActiveId(id)
     setDraft({
       name: item.name,
       imageUrl: item.imageUrl,
@@ -81,7 +88,12 @@ export default function App() {
   const closeModal = () => {
     setModalOpen(false)
     setEditingId(null)
+    setActiveId(null)
     setDraft(emptyDraft)
+  }
+
+  const handleImageUploaded = (id: string, url: string) => {
+    setItems((prev) => prev.map((item) => (item.id === id ? { ...item, imageUrl: url } : item)))
   }
 
   const handleSave = () => {
@@ -103,7 +115,7 @@ export default function App() {
       )
     } else {
       const newItem: FoodItem = {
-        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        id: activeId ?? generateId(),
         name: draft.name.trim(),
         imageUrl: draft.imageUrl,
         weight: toNumber(draft.weight),
@@ -191,14 +203,16 @@ export default function App() {
         onClear={clearSelection}
       />
 
-      {modalOpen && (
+      {modalOpen && activeId && (
         <FoodModal
+          itemId={activeId}
           draft={draft}
           isEditing={editingId !== null}
           onChange={setDraft}
           onSave={handleSave}
           onCancel={closeModal}
           onDelete={() => editingId && deleteItem(editingId)}
+          onImageUploaded={handleImageUploaded}
         />
       )}
     </>

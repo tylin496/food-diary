@@ -4,15 +4,26 @@ import type { FoodDraft } from '../types'
 import { uploadToCloudinary } from '../cloudinary'
 
 interface FoodModalProps {
+  itemId: string
   draft: FoodDraft
   isEditing: boolean
   onChange: (draft: FoodDraft) => void
   onSave: () => void
   onCancel: () => void
   onDelete: () => void
+  onImageUploaded: (id: string, url: string) => void
 }
 
-export function FoodModal({ draft, isEditing, onChange, onSave, onCancel, onDelete }: FoodModalProps) {
+export function FoodModal({
+  itemId,
+  draft,
+  isEditing,
+  onChange,
+  onSave,
+  onCancel,
+  onDelete,
+  onImageUploaded,
+}: FoodModalProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [preview, setPreview] = useState<string | null>(draft.imageUrl)
   const [uploading, setUploading] = useState(false)
@@ -28,6 +39,7 @@ export function FoodModal({ draft, isEditing, onChange, onSave, onCancel, onDele
     try {
       const url = await uploadToCloudinary(file)
       onChange({ ...draft, imageUrl: url })
+      onImageUploaded(itemId, url)
     } catch {
       setUploadError(true)
     } finally {
@@ -138,7 +150,7 @@ export function FoodModal({ draft, isEditing, onChange, onSave, onCancel, onDele
             <button
               type="button"
               className="btn btn-primary"
-              disabled={draft.name.trim().length === 0 || uploading}
+              disabled={draft.name.trim().length === 0}
               onClick={onSave}
             >
               儲存
