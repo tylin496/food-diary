@@ -352,7 +352,7 @@ function FoodBook({
   return (
     <>
       <nav className="nav">
-        <div className="nav-brand">食物熱量記錄</div>
+        <div className="nav-brand">Foodbook</div>
         <div className="nav-search">
           <Search size={18} />
           <input
