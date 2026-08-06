@@ -63,6 +63,52 @@
   --shadow-lg: 0 12px 32px color-mix(in srgb, #2d2b2b 22%, transparent);
 }
 
+/* Dark theme — same tokens, tuned for a dark ground. Applied via
+   [data-theme="dark"] on <html>, set in useTheme.ts (defaults to the
+   OS preference, overridable and persisted per-user). */
+:root[data-theme='dark'] {
+  --color-bg: #1a1817;
+  --color-surface: #242121;
+  --color-text: #f3f1f0;
+  --color-accent: #ff6b4a;
+  --color-accent-2: #e17b5b;
+  --color-divider: color-mix(in srgb, #f3f1f0 22%, transparent);
+
+  --color-neutral-100: #2d2b2b;
+  --color-neutral-200: #444141;
+  --color-neutral-300: #605d5d;
+  --color-neutral-400: #7d7979;
+  --color-neutral-500: #9b9797;
+  --color-neutral-600: #bab6b6;
+  --color-neutral-700: #d7d3d3;
+  --color-neutral-800: #eae7e7;
+  --color-neutral-900: #f8f4f4;
+
+  --color-accent-100: #4d170e;
+  --color-accent-200: #7c1405;
+  --color-accent-300: #ae1800;
+  --color-accent-400: #dd2b0f;
+  --color-accent-500: #ff563c;
+  --color-accent-600: #ff9783;
+  --color-accent-700: #ffc4b8;
+  --color-accent-800: #ffe0d9;
+  --color-accent-900: #fff2ef;
+
+  --color-accent-2-100: #471d16;
+  --color-accent-2-200: #71261b;
+  --color-accent-2-300: #9e3526;
+  --color-accent-2-400: #c94b39;
+  --color-accent-2-500: #ef6853;
+  --color-accent-2-600: #ff9784;
+  --color-accent-2-700: #ffc4b9;
+  --color-accent-2-800: #ffe0da;
+  --color-accent-2-900: #fff2ef;
+
+  --shadow-sm: 0 1px 2px color-mix(in srgb, #000 45%, transparent);
+  --shadow-md: 0 3px 10px color-mix(in srgb, #000 50%, transparent);
+  --shadow-lg: 0 12px 32px color-mix(in srgb, #000 60%, transparent);
+}
+
 body {
   background: var(--color-bg);
   color: var(--color-text);
@@ -212,16 +258,19 @@ textarea.input { min-height: 90px; resize: vertical; }
 
 /* — navigation — */
 .nav {
-  display: flex; align-items: center; gap: var(--space-4);
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4);
+  row-gap: var(--space-2);
   padding: var(--space-3) var(--space-4);
   border-bottom: 2px solid var(--color-divider);
 }
 .nav-brand {
   font-family: var(--font-heading); font-weight: var(--font-heading-weight);
   font-size: 18px; margin-right: auto;
+  flex: none; white-space: nowrap;
 }
 .nav a { color: inherit; text-decoration: none; font-size: 14px; }
 .nav a:hover, .nav a[aria-current='page'] { color: var(--color-accent); }
+.nav .btn { flex: none; white-space: nowrap; }
 
 /* — tables — */
 .table { width: 100%; border-collapse: collapse; font-size: 14px; }
@@ -273,6 +322,9 @@ body { background: var(--color-bg); }
 .nav-search input {
   flex: 1; border: 0; background: transparent; outline: none;
   font: inherit; font-size: 14px; color: var(--color-text);
+}
+@media (max-width: 640px) {
+  .nav-search { order: 1; flex-basis: 100%; max-width: none; }
 }
 
 /* — main content — */

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Image as ImageIcon, LogOut, Plus, Search } from 'lucide-react'
+import { Image as ImageIcon, LogOut, Moon, Plus, Search, Sun } from 'lucide-react'
 import { useAuth } from './useAuth'
+import { useTheme } from './useTheme'
 import { useCloudItems } from './useCloudItems'
 import type { FoodDraft, FoodItem } from './types'
 import { emptyDraft, getFoodTotals } from './types'
@@ -41,6 +42,7 @@ function FoodDiary({
   onLogOut: () => void
 }) {
   const [items, setItems, itemsLoading] = useCloudItems(OWNER_UID)
+  const { theme, toggleTheme } = useTheme()
   const [search, setSearch] = useState('')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
@@ -352,6 +354,14 @@ function FoodDiary({
             placeholder="搜尋食物名稱"
           />
         </div>
+        <button
+          type="button"
+          className="btn btn-secondary btn-icon"
+          title={theme === 'dark' ? '切換為亮色模式' : '切換為暗色模式'}
+          onClick={toggleTheme}
+        >
+          {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+        </button>
         {isOwner ? (
           <>
             <button type="button" className="btn btn-primary" onClick={openAddModal}>
