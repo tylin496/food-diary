@@ -10,10 +10,7 @@
     <title>食物熱量記錄</title>
     <script>
       (function () {
-        var stored = localStorage.getItem('theme')
-        var theme = stored === 'light' || stored === 'dark'
-          ? stored
-          : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+        var theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
         document.documentElement.dataset.theme = theme
       })()
     </script>
