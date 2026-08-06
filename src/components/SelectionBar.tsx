@@ -45,16 +45,16 @@ export function SelectionBar({
       <div className="selected-count">已選 {count} 項</div>
       <div className="stats">
         <div className="stat">
+          <div className="value">{totalCalories}</div>
+          <div className="label">熱量 (kcal)</div>
+        </div>
+        <div className="stat">
           <div className="value">{totalWeight}</div>
           <div className="label">重量 (g)</div>
         </div>
         <div className="stat">
           <div className="value">{totalProtein}</div>
           <div className="label">蛋白質 (g)</div>
-        </div>
-        <div className="stat">
-          <div className="value">{totalCalories}</div>
-          <div className="label">熱量 (kcal)</div>
         </div>
       </div>
       <button
