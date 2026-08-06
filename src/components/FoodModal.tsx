@@ -98,18 +98,6 @@ export function FoodModal({ draft, isEditing, onChange, onSave, onCancel, onDele
             />
           </div>
           <div className="field">
-            <label htmlFor="food-protein">蛋白質 (g)</label>
-            <input
-              id="food-protein"
-              className="input"
-              type="number"
-              inputMode="decimal"
-              value={draft.protein}
-              onChange={(e) => onChange({ ...draft, protein: e.target.value })}
-              placeholder="0"
-            />
-          </div>
-          <div className="field">
             <label htmlFor="food-calories">熱量 (kcal)</label>
             <input
               id="food-calories"
@@ -118,6 +106,18 @@ export function FoodModal({ draft, isEditing, onChange, onSave, onCancel, onDele
               inputMode="decimal"
               value={draft.calories}
               onChange={(e) => onChange({ ...draft, calories: e.target.value })}
+              placeholder="0"
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="food-protein">蛋白質 (g)</label>
+            <input
+              id="food-protein"
+              className="input"
+              type="number"
+              inputMode="decimal"
+              value={draft.protein}
+              onChange={(e) => onChange({ ...draft, protein: e.target.value })}
               placeholder="0"
             />
           </div>
