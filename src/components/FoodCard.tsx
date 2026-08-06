@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { Camera, Check, Pencil, Trash2 } from 'lucide-react'
+import { Camera, Check, Pencil } from 'lucide-react'
 import type { FoodItem } from '../types'
 import { getFoodTotals } from '../types'
 
@@ -15,7 +15,6 @@ interface FoodCardProps {
   dragging: boolean
   onToggle: (id: string) => void
   onEdit: (id: string) => void
-  onDelete: (id: string) => void
   onToggleSubItem: (id: string, subId: string) => void
   onDragHandlePointerDown: (id: string, e: React.PointerEvent) => void
 }
@@ -29,7 +28,6 @@ export function FoodCard({
   dragging,
   onToggle,
   onEdit,
-  onDelete,
   onToggleSubItem,
   onDragHandlePointerDown,
 }: FoodCardProps) {
@@ -121,16 +119,6 @@ export function FoodCard({
             >
               <Pencil size={14} />
             </button>
-            <button
-              type="button"
-              aria-label="刪除"
-              onClick={(e) => {
-                e.stopPropagation()
-                onDelete(item.id)
-              }}
-            >
-              <Trash2 size={14} />
-            </button>
           </div>
         )}
       </div>
@@ -157,9 +145,11 @@ export function FoodCard({
         </div>
       )}
       <div className="meta-row">
-        {totals.weight > 0 && <span className="tag tag-neutral">{totals.weight} g</span>}
-        <span className="tag tag-accent">{totals.protein} g 蛋白質</span>
-        <span className="tag tag-outline">{totals.calories} kcal</span>
+        <span className="stat-calories">{totals.calories} kcal</span>
+        <span className="meta-secondary">
+          {totals.weight > 0 && `${totals.weight} g · `}
+          {totals.protein} g 蛋白質
+        </span>
       </div>
     </div>
   )

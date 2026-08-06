@@ -251,6 +251,7 @@ function FoodBook({
       protein: shouldSplitBase ? '0' : String(item.protein),
       calories: shouldSplitBase ? '0' : String(item.calories),
       subItems,
+      subItemsExclusive: item.subItemsExclusive ?? false,
     })
     setModalOpen(true)
   }
@@ -268,16 +269,20 @@ function FoodBook({
 
   const toggleSubItemSelected = (id: string, subId: string) => {
     setItems((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              subItems: (item.subItems ?? []).map((sub) =>
+      prev.map((item) => {
+        if (item.id !== id) return item
+        const subItems = item.subItems ?? []
+        return {
+          ...item,
+          subItems: item.subItemsExclusive
+            ? subItems.map((sub) =>
+                sub.id === subId ? { ...sub, selected: sub.selected === false } : { ...sub, selected: false },
+              )
+            : subItems.map((sub) =>
                 sub.id === subId ? { ...sub, selected: sub.selected === false } : sub,
               ),
-            }
-          : item,
-      ),
+        }
+      }),
     )
   }
 
@@ -321,6 +326,7 @@ function FoodBook({
                 protein: toNumber(draft.protein),
                 calories: toNumber(draft.calories),
                 subItems,
+                subItemsExclusive: draft.subItemsExclusive,
               }
             : item,
         ),
@@ -335,6 +341,7 @@ function FoodBook({
         calories: toNumber(draft.calories),
         createdAt: Date.now(),
         subItems,
+        subItemsExclusive: draft.subItemsExclusive,
       }
       setItems((prev) => [newItem, ...prev])
     }
@@ -428,7 +435,6 @@ function FoodBook({
                 dragging={draggingId === item.id}
                 onToggle={toggleSelect}
                 onEdit={openEditModal}
-                onDelete={deleteItem}
                 onToggleSubItem={toggleSubItemSelected}
                 onDragHandlePointerDown={handleDragHandlePointerDown}
               />

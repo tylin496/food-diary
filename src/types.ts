@@ -17,6 +17,7 @@ export interface FoodItem {
   calories: number
   createdAt: number
   subItems?: FoodSubItem[]
+  subItemsExclusive?: boolean
 }
 
 export type FoodSubItemDraft = {
@@ -36,6 +37,7 @@ export type FoodDraft = {
   protein: string
   calories: string
   subItems: FoodSubItemDraft[]
+  subItemsExclusive: boolean
 }
 
 export const emptyDraft: FoodDraft = {
@@ -45,10 +47,12 @@ export const emptyDraft: FoodDraft = {
   protein: '',
   calories: '',
   subItems: [],
+  subItemsExclusive: false,
 }
 
 export function getFoodTotals(item: FoodItem): { weight: number; protein: number; calories: number } {
-  const subItems = (item.subItems ?? []).filter((sub) => sub.selected !== false)
+  const active = (item.subItems ?? []).filter((sub) => sub.selected !== false)
+  const subItems = item.subItemsExclusive ? active.slice(0, 1) : active
   return subItems.reduce(
     (acc, sub) => ({
       weight: acc.weight + sub.weight,
