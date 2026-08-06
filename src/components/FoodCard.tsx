@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { Camera, Check, Pencil } from 'lucide-react'
 import type { FoodItem } from '../types'
 import { getFoodTotals } from '../types'
@@ -43,6 +43,8 @@ export function FoodCard({
   const longPressTimer = useRef<number | null>(null)
   const pointerStart = useRef<{ x: number; y: number } | null>(null)
   const longPressFired = useRef(false)
+  const lastPointerType = useRef<string>('mouse')
+  const [holding, setHolding] = useState(false)
 
   const clearLongPress = () => {
     if (longPressTimer.current !== null) {
@@ -50,14 +52,18 @@ export function FoodCard({
       longPressTimer.current = null
     }
     pointerStart.current = null
+    setHolding(false)
   }
 
   const handlePhotoPointerDown = (e: React.PointerEvent) => {
+    lastPointerType.current = e.pointerType
     if (!reorderEnabled) return
     pointerStart.current = { x: e.clientX, y: e.clientY }
+    setHolding(true)
     longPressTimer.current = window.setTimeout(() => {
       longPressTimer.current = null
       longPressFired.current = true
+      setHolding(false)
       onDragHandlePointerDown(item.id, e)
     }, LONG_PRESS_MS)
   }
@@ -98,18 +104,26 @@ export function FoodCard({
       aria-pressed={selected}
     >
       <div
-        className="photo"
+        className={`photo${holding ? ' is-holding' : ''}`}
+        style={reorderEnabled ? { touchAction: 'none' } : undefined}
         onPointerDown={handlePhotoPointerDown}
         onPointerMove={handlePhotoPointerMove}
         onPointerUp={clearLongPress}
         onPointerCancel={clearLongPress}
         onPointerLeave={clearLongPress}
         onContextMenu={(e) => {
-          if (reorderEnabled) e.preventDefault()
+          // Only suppress the OS long-press menu (touch/pen) that would fight the
+          // drag gesture; real right-clicks should still offer "Save image as…".
+          if (reorderEnabled && lastPointerType.current !== 'mouse') e.preventDefault()
         }}
       >
         {item.imageUrl ? (
-          <img src={item.imageUrl} alt={item.name} className={grayscale ? '' : 'no-grayscale'} />
+          <img
+            src={item.imageUrl}
+            alt={item.name}
+            className={grayscale ? '' : 'no-grayscale'}
+            draggable={false}
+          />
         ) : (
           <Camera size={28} className="placeholder-icon" />
         )}

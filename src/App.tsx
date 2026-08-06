@@ -206,11 +206,14 @@ function FoodBook({
       grabOffsetY: e.clientY - rect.top,
     }
     lastPointerRef.current = { x: e.clientX, y: e.clientY }
-    el.style.transition = 'none'
+    el.style.transition = 'transform 140ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 140ms ease'
     el.style.zIndex = '60'
     el.style.boxShadow = 'var(--shadow-lg)'
     updateDragTransform(el, e.clientX, e.clientY)
     setDraggingId(id)
+    window.setTimeout(() => {
+      if (dragMetaRef.current?.id === id) el.style.transition = 'none'
+    }, 140)
     window.addEventListener('pointermove', handlePointerMove)
     window.addEventListener('pointerup', handlePointerUp)
   }
