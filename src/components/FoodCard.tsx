@@ -1,4 +1,4 @@
-import { Camera, Check, Pencil, Trash2 } from 'lucide-react'
+import { Camera, Check, GripVertical, Pencil, Trash2 } from 'lucide-react'
 import type { FoodItem } from '../types'
 import { getFoodTotals } from '../types'
 
@@ -6,19 +6,33 @@ interface FoodCardProps {
   item: FoodItem
   selected: boolean
   grayscale: boolean
+  reorderEnabled: boolean
+  dragging: boolean
   onToggle: (id: string) => void
   onEdit: (id: string) => void
   onDelete: (id: string) => void
+  onDragHandlePointerDown: (id: string, e: React.PointerEvent) => void
 }
 
-export function FoodCard({ item, selected, grayscale, onToggle, onEdit, onDelete }: FoodCardProps) {
+export function FoodCard({
+  item,
+  selected,
+  grayscale,
+  reorderEnabled,
+  dragging,
+  onToggle,
+  onEdit,
+  onDelete,
+  onDragHandlePointerDown,
+}: FoodCardProps) {
   const totals = getFoodTotals(item)
   const subItems = item.subItems ?? []
   return (
     <div
       role="button"
       tabIndex={0}
-      className={`food-card${selected ? ' is-selected' : ''}`}
+      data-food-id={item.id}
+      className={`food-card${selected ? ' is-selected' : ''}${dragging ? ' is-dragging' : ''}`}
       onClick={() => onToggle(item.id)}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -40,6 +54,20 @@ export function FoodCard({ item, selected, grayscale, onToggle, onEdit, onDelete
           </div>
         )}
         <div className="card-actions">
+          {reorderEnabled && (
+            <button
+              type="button"
+              className="drag-handle"
+              aria-label="拖曳排序"
+              onClick={(e) => e.stopPropagation()}
+              onPointerDown={(e) => {
+                e.stopPropagation()
+                onDragHandlePointerDown(item.id, e)
+              }}
+            >
+              <GripVertical size={14} />
+            </button>
+          )}
           <button
             type="button"
             aria-label="編輯"

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Image as ImageIcon, Plus, Search } from 'lucide-react'
 import { useLocalStorage } from './useLocalStorage'
 import type { FoodDraft, FoodItem } from './types'
@@ -22,10 +22,57 @@ export default function App() {
 
   const filteredItems = useMemo(() => {
     const q = search.trim().toLowerCase()
-    const sorted = [...items].sort((a, b) => b.createdAt - a.createdAt)
-    if (!q) return sorted
-    return sorted.filter((item) => item.name.toLowerCase().includes(q))
+    if (!q) return items
+    return items.filter((item) => item.name.toLowerCase().includes(q))
   }, [items, search])
+
+  const reorderEnabled = search.trim().length === 0
+  const [draggingId, setDraggingId] = useState<string | null>(null)
+  const dragStateRef = useRef<{ id: string } | null>(null)
+
+  const handlePointerMove = useCallback(
+    (e: PointerEvent) => {
+      const dragging = dragStateRef.current
+      if (!dragging) return
+      const el = document.elementFromPoint(e.clientX, e.clientY)
+      const cardEl = el instanceof Element ? el.closest<HTMLElement>('[data-food-id]') : null
+      const targetId = cardEl?.dataset.foodId
+      if (!targetId || targetId === dragging.id) return
+      setItems((prev) => {
+        const fromIndex = prev.findIndex((item) => item.id === dragging.id)
+        const toIndex = prev.findIndex((item) => item.id === targetId)
+        if (fromIndex === -1 || toIndex === -1 || fromIndex === toIndex) return prev
+        const next = [...prev]
+        const [moved] = next.splice(fromIndex, 1)
+        next.splice(toIndex, 0, moved)
+        return next
+      })
+    },
+    [setItems],
+  )
+
+  const handlePointerUp = useCallback(() => {
+    dragStateRef.current = null
+    setDraggingId(null)
+    window.removeEventListener('pointermove', handlePointerMove)
+    window.removeEventListener('pointerup', handlePointerUp)
+  }, [handlePointerMove])
+
+  const handleDragHandlePointerDown = (id: string, e: React.PointerEvent) => {
+    if (!reorderEnabled) return
+    e.preventDefault()
+    dragStateRef.current = { id }
+    setDraggingId(id)
+    window.addEventListener('pointermove', handlePointerMove)
+    window.addEventListener('pointerup', handlePointerUp)
+  }
+
+  useEffect(() => {
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove)
+      window.removeEventListener('pointerup', handlePointerUp)
+    }
+  }, [handlePointerMove, handlePointerUp])
 
   const selectedItems = useMemo(
     () => items.filter((item) => selectedIds.has(item.id)),
@@ -304,9 +351,12 @@ export default function App() {
                 item={item}
                 selected={selectedIds.has(item.id)}
                 grayscale={GRAYSCALE_PHOTOS}
+                reorderEnabled={reorderEnabled}
+                dragging={draggingId === item.id}
                 onToggle={toggleSelect}
                 onEdit={openEditModal}
                 onDelete={deleteItem}
+                onDragHandlePointerDown={handleDragHandlePointerDown}
               />
             ))}
           </div>

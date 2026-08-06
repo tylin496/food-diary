@@ -314,6 +314,7 @@ body { background: var(--color-bg); }
   color: inherit;
 }
 .food-card.is-selected { border-color: var(--color-accent); }
+.food-card.is-dragging { opacity: 0.5; }
 .food-card .photo {
   position: relative;
   aspect-ratio: 1; overflow: hidden;
@@ -344,6 +345,13 @@ body { background: var(--color-bg); }
 }
 .food-card .card-actions button:hover {
   background: var(--color-bg);
+}
+.food-card .card-actions button.drag-handle {
+  cursor: grab;
+  touch-action: none;
+}
+.food-card .card-actions button.drag-handle:active {
+  cursor: grabbing;
 }
 .food-card .food-name {
   font-family: var(--font-heading); font-weight: 800; font-size: 15px;
