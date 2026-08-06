@@ -99,20 +99,40 @@ export default function App() {
     if (!item) return
     setEditingId(id)
     setActiveId(id)
+
+    const existingSubItems = (item.subItems ?? []).map((sub) => ({
+      id: sub.id,
+      name: sub.name,
+      imageUrl: sub.imageUrl,
+      weight: String(sub.weight),
+      protein: String(sub.protein),
+      calories: String(sub.calories),
+    }))
+    // Legacy records may still carry their own base numbers alongside sub-items;
+    // split them out into a row so the top fields can show a clean auto-sum.
+    const hasBaseValues = item.weight > 0 || item.calories > 0 || item.protein > 0
+    const shouldSplitBase = existingSubItems.length > 0 && hasBaseValues
+    const subItems = shouldSplitBase
+      ? [
+          {
+            id: generateId(),
+            name: item.name,
+            imageUrl: null,
+            weight: String(item.weight),
+            protein: String(item.protein),
+            calories: String(item.calories),
+          },
+          ...existingSubItems,
+        ]
+      : existingSubItems
+
     setDraft({
       name: item.name,
       imageUrl: item.imageUrl,
-      weight: String(item.weight),
-      protein: String(item.protein),
-      calories: String(item.calories),
-      subItems: (item.subItems ?? []).map((sub) => ({
-        id: sub.id,
-        name: sub.name,
-        imageUrl: sub.imageUrl,
-        weight: String(sub.weight),
-        protein: String(sub.protein),
-        calories: String(sub.calories),
-      })),
+      weight: shouldSplitBase ? '0' : String(item.weight),
+      protein: shouldSplitBase ? '0' : String(item.protein),
+      calories: shouldSplitBase ? '0' : String(item.calories),
+      subItems,
     })
     setModalOpen(true)
   }

@@ -41,6 +41,31 @@ export function FoodModal({
       protein: '',
       calories: '',
     }
+
+    // First sub-item: split the manually-entered base numbers out into their
+    // own row so the top fields can become a read-only auto-sum from here on.
+    const hasBaseValues =
+      draft.subItems.length === 0 &&
+      (toNumber(draft.weight) > 0 || toNumber(draft.calories) > 0 || toNumber(draft.protein) > 0)
+    if (hasBaseValues) {
+      const baseSubItem: FoodSubItemDraft = {
+        id: generateId(),
+        name: draft.name.trim() || '本體',
+        imageUrl: null,
+        weight: draft.weight,
+        protein: draft.protein,
+        calories: draft.calories,
+      }
+      onChange({
+        ...draft,
+        weight: '0',
+        calories: '0',
+        protein: '0',
+        subItems: [baseSubItem, newSubItem],
+      })
+      return
+    }
+
     onChange({ ...draft, subItems: [...draft.subItems, newSubItem] })
   }
 
@@ -71,6 +96,7 @@ export function FoodModal({
     }
   }
 
+  const hasSubItems = draft.subItems.length > 0
   const totalWeight = toNumber(draft.weight) + draft.subItems.reduce((sum, sub) => sum + toNumber(sub.weight), 0)
   const totalCalories =
     toNumber(draft.calories) + draft.subItems.reduce((sum, sub) => sum + toNumber(sub.calories), 0)
@@ -146,37 +172,40 @@ export function FoodModal({
 
         <div className="number-fields">
           <div className="field">
-            <label htmlFor="food-weight">重量 (g)</label>
+            <label htmlFor="food-weight">重量 (g){hasSubItems && '・自動加總'}</label>
             <input
               id="food-weight"
               className="input"
               type="number"
               inputMode="decimal"
-              value={draft.weight}
+              value={hasSubItems ? totalWeight : draft.weight}
+              disabled={hasSubItems}
               onChange={(e) => onChange({ ...draft, weight: e.target.value })}
               placeholder="0"
             />
           </div>
           <div className="field">
-            <label htmlFor="food-calories">熱量 (kcal)</label>
+            <label htmlFor="food-calories">熱量 (kcal){hasSubItems && '・自動加總'}</label>
             <input
               id="food-calories"
               className="input"
               type="number"
               inputMode="decimal"
-              value={draft.calories}
+              value={hasSubItems ? totalCalories : draft.calories}
+              disabled={hasSubItems}
               onChange={(e) => onChange({ ...draft, calories: e.target.value })}
               placeholder="0"
             />
           </div>
           <div className="field">
-            <label htmlFor="food-protein">蛋白質 (g)</label>
+            <label htmlFor="food-protein">蛋白質 (g){hasSubItems && '・自動加總'}</label>
             <input
               id="food-protein"
               className="input"
               type="number"
               inputMode="decimal"
-              value={draft.protein}
+              value={hasSubItems ? totalProtein : draft.protein}
+              disabled={hasSubItems}
               onChange={(e) => onChange({ ...draft, protein: e.target.value })}
               placeholder="0"
             />
@@ -254,12 +283,6 @@ export function FoodModal({
                   </div>
                 </div>
               ))}
-            </div>
-          )}
-
-          {draft.subItems.length > 0 && (
-            <div className="sub-items-total text-muted">
-              加總：{totalWeight} g・{totalCalories} kcal・{totalProtein} g 蛋白質
             </div>
           )}
         </div>
