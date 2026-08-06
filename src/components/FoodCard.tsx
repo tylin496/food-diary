@@ -12,6 +12,7 @@ interface FoodCardProps {
   onToggle: (id: string) => void
   onEdit: (id: string) => void
   onDelete: (id: string) => void
+  onToggleSubItem: (id: string, subId: string) => void
   onDragHandlePointerDown: (id: string, e: React.PointerEvent) => void
 }
 
@@ -25,6 +26,7 @@ export function FoodCard({
   onToggle,
   onEdit,
   onDelete,
+  onToggleSubItem,
   onDragHandlePointerDown,
 }: FoodCardProps) {
   const totals = getFoodTotals(item)
@@ -98,7 +100,18 @@ export function FoodCard({
       {subItems.length > 0 && (
         <div className="sub-items-summary">
           {subItems.map((sub) => (
-            <span className={`sub-item-chip${sub.selected === false ? ' is-excluded' : ''}`} key={sub.id}>
+            <span
+              className={`sub-item-chip${sub.selected === false ? ' is-excluded' : ''}${readOnly ? '' : ' is-toggleable'}`}
+              key={sub.id}
+              onClick={
+                readOnly
+                  ? undefined
+                  : (e) => {
+                      e.stopPropagation()
+                      onToggleSubItem(item.id, sub.id)
+                    }
+              }
+            >
               {sub.imageUrl && <img src={sub.imageUrl} alt={sub.name} />}
               {sub.name}
             </span>

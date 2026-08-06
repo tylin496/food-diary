@@ -266,6 +266,21 @@ function FoodBook({
     setItems((prev) => prev.map((item) => (item.id === id ? { ...item, imageUrl: url } : item)))
   }
 
+  const toggleSubItemSelected = (id: string, subId: string) => {
+    setItems((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              subItems: (item.subItems ?? []).map((sub) =>
+                sub.id === subId ? { ...sub, selected: sub.selected === false } : sub,
+              ),
+            }
+          : item,
+      ),
+    )
+  }
+
   const handleSubImageUploaded = (id: string, subId: string, url: string) => {
     setItems((prev) =>
       prev.map((item) =>
@@ -422,6 +437,7 @@ function FoodBook({
                 onToggle={toggleSelect}
                 onEdit={openEditModal}
                 onDelete={deleteItem}
+                onToggleSubItem={toggleSubItemSelected}
                 onDragHandlePointerDown={handleDragHandlePointerDown}
               />
             ))}

@@ -428,6 +428,12 @@ body { background: var(--color-bg); }
 .food-card .sub-item-chip.is-excluded {
   opacity: 0.5; text-decoration: line-through;
 }
+.food-card .sub-item-chip.is-toggleable {
+  cursor: pointer;
+}
+.food-card .sub-item-chip.is-toggleable:hover {
+  background: var(--color-neutral-200);
+}
 
 /* — floating selection summary bar — */
 .selection-bar {
