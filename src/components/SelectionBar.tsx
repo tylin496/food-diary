@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Check, Copy } from 'lucide-react'
 
 interface SelectionBarProps {
   count: number
@@ -44,8 +45,8 @@ export function SelectionBar({
           <div className="label">熱量 (kcal)</div>
         </div>
       </div>
-      <button type="button" className="btn btn-clear" onClick={handleCopy}>
-        {copied ? '已複製！' : '複製成文字'}
+      <button type="button" className="btn btn-clear btn-icon" onClick={handleCopy} aria-label={copied ? '已複製' : '複製成文字'}>
+        {copied ? <Check size={16} /> : <Copy size={16} />}
       </button>
       <button type="button" className="btn btn-clear" onClick={onClear}>
         清除選取
