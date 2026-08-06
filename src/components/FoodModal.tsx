@@ -14,6 +14,8 @@ interface FoodModalProps {
   onDelete: () => void
   onImageUploaded: (id: string, url: string) => void
   onSubImageUploaded: (id: string, subId: string, url: string) => void
+  mergeCandidateCount: number
+  onMerge: () => void
 }
 
 export function FoodModal({
@@ -26,6 +28,8 @@ export function FoodModal({
   onDelete,
   onImageUploaded,
   onSubImageUploaded,
+  mergeCandidateCount,
+  onMerge,
 }: FoodModalProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [preview, setPreview] = useState<string | null>(draft.imageUrl)
@@ -225,6 +229,15 @@ export function FoodModal({
             />
           </div>
         </div>
+
+        {isEditing && mergeCandidateCount > 0 && (
+          <div className="merge-hint">
+            <span>已選取 {mergeCandidateCount} 項</span>
+            <button type="button" className="btn-ghost" onClick={onMerge}>
+              合併為子項目
+            </button>
+          </div>
+        )}
 
         <div className="sub-items-section">
           <div className="sub-items-header">

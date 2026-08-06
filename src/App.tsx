@@ -85,14 +85,21 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [filteredItems, modalOpen])
 
-  const mergeSelected = () => {
-    if (selectedItems.length < 2) return
-    if (!window.confirm(`確定要將這 ${selectedItems.length} 項合併成一筆紀錄嗎？合併後個別項目將消失，但照片與數值會保留為子項目。`)) return
+  const mergeIntoItem = (baseId: string, mergeIds: string[]) => {
+    if (mergeIds.length === 0) return
+    const base = items.find((item) => item.id === baseId)
+    if (!base) return
+    const mergeItems = items.filter((item) => mergeIds.includes(item.id))
+    if (
+      !window.confirm(
+        `確定要將這 ${mergeItems.length} 項合併進「${base.name}」嗎？合併後個別項目將消失，但照片與數值會保留為子項目。`,
+      )
+    )
+      return
 
-    const [base, ...rest] = selectedItems
     const mergedSubItems = [
       ...(base.subItems ?? []),
-      ...rest.flatMap((item) => [
+      ...mergeItems.flatMap((item) => [
         {
           id: generateId(),
           name: item.name,
@@ -104,14 +111,15 @@ export default function App() {
         ...(item.subItems ?? []),
       ]),
     ]
-    const removeIds = new Set(rest.map((item) => item.id))
+    const removeIds = new Set(mergeIds)
 
     setItems((prev) =>
       prev
         .filter((item) => !removeIds.has(item.id))
-        .map((item) => (item.id === base.id ? { ...item, subItems: mergedSubItems } : item)),
+        .map((item) => (item.id === baseId ? { ...item, subItems: mergedSubItems } : item)),
     )
     setSelectedIds(new Set())
+    closeModal()
   }
 
   const openAddModal = () => {
@@ -246,6 +254,10 @@ export default function App() {
     if (editingId === id) closeModal()
   }
 
+  const mergeCandidateIds = editingId
+    ? selectedItems.filter((item) => item.id !== editingId).map((item) => item.id)
+    : []
+
   const hasAnyItems = items.length > 0
   const hasResults = filteredItems.length > 0
 
@@ -307,9 +319,7 @@ export default function App() {
         totalProtein={totals.protein}
         totalCalories={totals.calories}
         onClear={clearSelection}
-        onMerge={mergeSelected}
         onCopy={copySelectedAsText}
-        hideMerge={modalOpen && editingId !== null}
       />
 
       {modalOpen && activeId && (
@@ -323,6 +333,8 @@ export default function App() {
           onDelete={() => editingId && deleteItem(editingId)}
           onImageUploaded={handleImageUploaded}
           onSubImageUploaded={handleSubImageUploaded}
+          mergeCandidateCount={mergeCandidateIds.length}
+          onMerge={() => editingId && mergeIntoItem(editingId, mergeCandidateIds)}
         />
       )}
     </>

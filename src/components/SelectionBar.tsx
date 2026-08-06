@@ -6,9 +6,7 @@ interface SelectionBarProps {
   totalProtein: number
   totalCalories: number
   onClear: () => void
-  onMerge: () => void
   onCopy: () => void
-  hideMerge: boolean
 }
 
 export function SelectionBar({
@@ -17,9 +15,7 @@ export function SelectionBar({
   totalProtein,
   totalCalories,
   onClear,
-  onMerge,
   onCopy,
-  hideMerge,
 }: SelectionBarProps) {
   const [copied, setCopied] = useState(false)
 
@@ -51,11 +47,6 @@ export function SelectionBar({
       <button type="button" className="btn btn-clear" onClick={handleCopy}>
         {copied ? '已複製！' : '複製成文字'}
       </button>
-      {count >= 2 && !hideMerge && (
-        <button type="button" className="btn btn-clear" onClick={onMerge}>
-          合併為一筆
-        </button>
-      )}
       <button type="button" className="btn btn-clear" onClick={onClear}>
         清除選取
       </button>
