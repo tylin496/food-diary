@@ -98,7 +98,7 @@ export function FoodCard({
       {subItems.length > 0 && (
         <div className="sub-items-summary">
           {subItems.map((sub) => (
-            <span className="sub-item-chip" key={sub.id}>
+            <span className={`sub-item-chip${sub.selected === false ? ' is-excluded' : ''}`} key={sub.id}>
               {sub.imageUrl && <img src={sub.imageUrl} alt={sub.name} />}
               {sub.name}
             </span>

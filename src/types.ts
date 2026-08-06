@@ -5,6 +5,7 @@ export interface FoodSubItem {
   weight: number
   protein: number
   calories: number
+  selected: boolean
 }
 
 export interface FoodItem {
@@ -25,6 +26,7 @@ export type FoodSubItemDraft = {
   weight: string
   protein: string
   calories: string
+  selected: boolean
 }
 
 export type FoodDraft = {
@@ -46,7 +48,7 @@ export const emptyDraft: FoodDraft = {
 }
 
 export function getFoodTotals(item: FoodItem): { weight: number; protein: number; calories: number } {
-  const subItems = item.subItems ?? []
+  const subItems = (item.subItems ?? []).filter((sub) => sub.selected !== false)
   return subItems.reduce(
     (acc, sub) => ({
       weight: acc.weight + sub.weight,

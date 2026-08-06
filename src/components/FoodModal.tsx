@@ -47,6 +47,7 @@ export function FoodModal({
       weight: '',
       protein: '',
       calories: '',
+      selected: true,
     }
 
     // First sub-item: split the manually-entered base numbers out into their
@@ -62,6 +63,7 @@ export function FoodModal({
         weight: draft.weight,
         protein: draft.protein,
         calories: draft.calories,
+        selected: true,
       }
       onChange({
         ...draft,
@@ -115,11 +117,13 @@ export function FoodModal({
   }
 
   const hasSubItems = draft.subItems.length > 0
-  const totalWeight = toNumber(draft.weight) + draft.subItems.reduce((sum, sub) => sum + toNumber(sub.weight), 0)
+  const selectedSubItems = draft.subItems.filter((sub) => sub.selected)
+  const totalWeight =
+    toNumber(draft.weight) + selectedSubItems.reduce((sum, sub) => sum + toNumber(sub.weight), 0)
   const totalCalories =
-    toNumber(draft.calories) + draft.subItems.reduce((sum, sub) => sum + toNumber(sub.calories), 0)
+    toNumber(draft.calories) + selectedSubItems.reduce((sum, sub) => sum + toNumber(sub.calories), 0)
   const totalProtein =
-    toNumber(draft.protein) + draft.subItems.reduce((sum, sub) => sum + toNumber(sub.protein), 0)
+    toNumber(draft.protein) + selectedSubItems.reduce((sum, sub) => sum + toNumber(sub.protein), 0)
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -238,7 +242,7 @@ export function FoodModal({
 
         <div className="sub-items-section">
           <div className="sub-items-header">
-            <span>子項目</span>
+            <span>子項目・勾選要計入加總的項目</span>
             <button type="button" className="btn-ghost btn-add-subitem" onClick={addSubItem}>
               <Plus size={14} />
               新增子項目
@@ -248,8 +252,15 @@ export function FoodModal({
           {draft.subItems.length > 0 && (
             <div className="sub-items">
               {draft.subItems.map((sub) => (
-                <div className="sub-item-row" key={sub.id}>
+                <div className={`sub-item-row${sub.selected ? '' : ' is-excluded'}`} key={sub.id}>
                   <div className="sub-item-row-top">
+                    <input
+                      type="checkbox"
+                      className="sub-item-checkbox"
+                      aria-label={sub.selected ? '取消計入加總' : '計入加總'}
+                      checked={sub.selected}
+                      onChange={(e) => updateSubItem(sub.id, { selected: e.target.checked })}
+                    />
                     <label className="sub-item-photo">
                       {sub.imageUrl || subPreviews[sub.id] ? (
                         <img src={sub.imageUrl ?? subPreviews[sub.id]} alt={sub.name || '子項目照片'} />

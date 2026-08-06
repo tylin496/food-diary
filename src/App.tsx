@@ -185,6 +185,7 @@ function FoodDiary({
           weight: item.weight,
           protein: item.protein,
           calories: item.calories,
+          selected: true,
         },
         ...(item.subItems ?? []),
       ]),
@@ -222,6 +223,7 @@ function FoodDiary({
       weight: String(sub.weight),
       protein: String(sub.protein),
       calories: String(sub.calories),
+      selected: sub.selected !== false,
     }))
     // Legacy records may still carry their own base numbers alongside sub-items;
     // split them out into a row so the top fields can show a clean auto-sum.
@@ -236,6 +238,7 @@ function FoodDiary({
             weight: String(item.weight),
             protein: String(item.protein),
             calories: String(item.calories),
+            selected: true,
           },
           ...existingSubItems,
         ]
@@ -289,6 +292,7 @@ function FoodDiary({
         weight: toNumber(sub.weight),
         protein: toNumber(sub.protein),
         calories: toNumber(sub.calories),
+        selected: sub.selected,
       }))
     if (editingId) {
       setItems((prev) =>
