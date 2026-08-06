@@ -1,6 +1,10 @@
-import { Camera, Check, GripVertical, Pencil, Trash2 } from 'lucide-react'
+import { useRef } from 'react'
+import { Camera, Check, Pencil, Trash2 } from 'lucide-react'
 import type { FoodItem } from '../types'
 import { getFoodTotals } from '../types'
+
+const LONG_PRESS_MS = 450
+const LONG_PRESS_MOVE_TOLERANCE = 10
 
 interface FoodCardProps {
   item: FoodItem
@@ -31,13 +35,51 @@ export function FoodCard({
 }: FoodCardProps) {
   const totals = getFoodTotals(item)
   const subItems = item.subItems ?? []
+
+  const longPressTimer = useRef<number | null>(null)
+  const pointerStart = useRef<{ x: number; y: number } | null>(null)
+  const longPressFired = useRef(false)
+
+  const clearLongPress = () => {
+    if (longPressTimer.current !== null) {
+      window.clearTimeout(longPressTimer.current)
+      longPressTimer.current = null
+    }
+    pointerStart.current = null
+  }
+
+  const handlePhotoPointerDown = (e: React.PointerEvent) => {
+    if (!reorderEnabled) return
+    pointerStart.current = { x: e.clientX, y: e.clientY }
+    longPressTimer.current = window.setTimeout(() => {
+      longPressTimer.current = null
+      longPressFired.current = true
+      onDragHandlePointerDown(item.id, e)
+    }, LONG_PRESS_MS)
+  }
+
+  const handlePhotoPointerMove = (e: React.PointerEvent) => {
+    if (!pointerStart.current) return
+    const dx = e.clientX - pointerStart.current.x
+    const dy = e.clientY - pointerStart.current.y
+    if (Math.hypot(dx, dy) > LONG_PRESS_MOVE_TOLERANCE) {
+      clearLongPress()
+    }
+  }
+
   return (
     <div
       role="button"
       tabIndex={0}
       data-food-id={item.id}
       className={`food-card${selected ? ' is-selected' : ''}${dragging ? ' is-dragging' : ''}`}
-      onClick={() => onToggle(item.id)}
+      onClick={() => {
+        if (longPressFired.current) {
+          longPressFired.current = false
+          return
+        }
+        onToggle(item.id)
+      }}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()
@@ -46,7 +88,17 @@ export function FoodCard({
       }}
       aria-pressed={selected}
     >
-      <div className="photo">
+      <div
+        className="photo"
+        onPointerDown={handlePhotoPointerDown}
+        onPointerMove={handlePhotoPointerMove}
+        onPointerUp={clearLongPress}
+        onPointerCancel={clearLongPress}
+        onPointerLeave={clearLongPress}
+        onContextMenu={(e) => {
+          if (reorderEnabled) e.preventDefault()
+        }}
+      >
         {item.imageUrl ? (
           <img src={item.imageUrl} alt={item.name} className={grayscale ? '' : 'no-grayscale'} />
         ) : (
@@ -59,20 +111,6 @@ export function FoodCard({
         )}
         {!readOnly && (
           <div className="card-actions">
-            {reorderEnabled && (
-              <button
-                type="button"
-                className="drag-handle"
-                aria-label="拖曳排序"
-                onClick={(e) => e.stopPropagation()}
-                onPointerDown={(e) => {
-                  e.stopPropagation()
-                  onDragHandlePointerDown(item.id, e)
-                }}
-              >
-                <GripVertical size={14} />
-              </button>
-            )}
             <button
               type="button"
               aria-label="編輯"
