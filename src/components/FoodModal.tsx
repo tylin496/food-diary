@@ -140,10 +140,7 @@ export function FoodModal({
   }
 
   return (
-    <div
-      className="dialog-backdrop"
-      onClick={onCancel}
-    >
+    <div className="dialog-backdrop">
       <div className="dialog" onClick={(e) => e.stopPropagation()}>
         <div className="dialog-header">
           <div className="dialog-title">{isEditing ? '編輯紀錄' : '新增紀錄'}</div>
