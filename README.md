@@ -1,8 +1,8 @@
-# 食物熱量記錄 (Food Diary)
+# 食物熱量記錄 (FoodBook)
 
 一個簡單的個人食物紀錄工具：拍照記錄每餐的重量、蛋白質與熱量，並用**多選 + 即時加總**取代逐張翻照片、心算數字的麻煩。
 
-🔗 **Live Demo**：https://tylin496.github.io/food-diary/
+🔗 **Live Demo**：https://tylin496.github.io/foodbook/
 
 ## 功能
 

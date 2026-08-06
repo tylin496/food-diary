@@ -21,7 +21,7 @@ export default function App() {
   const isOwner = user?.uid === OWNER_UID
 
   return (
-    <FoodDiary
+    <FoodBook
       isOwner={isOwner}
       userLabel={user?.displayName ?? user?.email ?? ''}
       onSignIn={signIn}
@@ -30,7 +30,7 @@ export default function App() {
   )
 }
 
-function FoodDiary({
+function FoodBook({
   isOwner,
   userLabel,
   onSignIn,
