@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="stylesheet" href="styles.css">
+<style>
+  input[type="file"]{display:none}
+  ::placeholder{color:color-mix(in srgb, var(--color-text) 45%, transparent)}
+</style>
+</helmet>
+<div style="min-height:100vh;background:var(--color-bg);padding-bottom:140px">
+  <div class="nav" style="flex-wrap:wrap">
+    <span class="nav-brand">食物熱量記錄</span>
+    <div style="display:flex;align-items:center;gap:8px;background:var(--color-surface);border:1px solid var(--color-divider);padding:6px 10px;flex:1;min-width:160px;max-width:320px">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;opacity:0.6"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+      <input type="text" value="{{search}}" onChange="{{onSearchChange}}" placeholder="搜尋食物名稱" style="border:none;background:transparent;outline:none;font:inherit;font-size:14px;color:var(--color-text);width:100%" />
+    </div>
+    <button class="btn btn-primary" onClick="{{onOpenAdd}}">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+      新增食物
+    </button>
+  </div>
+
+  <main style="max-width:1200px;margin:0 auto;padding:var(--space-6) var(--space-4)">
+    <sc-if value="{{showGrid}}" hint-placeholder-val="{{true}}">
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:var(--space-4)">
+        <sc-for list="{{items}}" as="item" hint-placeholder-count="6">
+          <div style="{{item.cardStyle}}" onClick="{{item.onToggle}}">
+            <div style="position:relative;aspect-ratio:1;overflow:hidden;background:var(--color-neutral-200)">
+              <sc-if value="{{item.hasImage}}" hint-placeholder-val="{{true}}">
+                <img src="{{item.imageData}}" style="{{item.imgStyle}}" />
+              </sc-if>
+              <sc-if value="{{item.noImage}}" hint-placeholder-val="{{false}}">
+                <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--color-neutral-500)">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                </div>
+              </sc-if>
+              <sc-if value="{{item.selected}}" hint-placeholder-val="{{false}}">
+                <div style="position:absolute;top:6px;left:6px;width:24px;height:24px;background:var(--color-accent);color:var(--color-bg);display:flex;align-items:center;justify-content:center">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </div>
+              </sc-if>
+              <div style="position:absolute;top:6px;right:6px;display:flex;flex-direction:column;gap:4px">
+                <button style="width:26px;height:26px;padding:0;border:none;background:color-mix(in srgb, var(--color-bg) 88%, transparent);color:var(--color-text);display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="color: var(--color-accent)" onClick="{{item.onEdit}}">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path></svg>
+                </button>
+                <button style="width:26px;height:26px;padding:0;border:none;background:color-mix(in srgb, var(--color-bg) 88%, transparent);color:var(--color-text);display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="color: var(--color-accent)" onClick="{{item.onDelete}}">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                </button>
+              </div>
+            </div>
+            <div style="font-family:var(--font-heading);font-weight:800;font-size:15px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{item.name}}</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <span class="tag tag-neutral">{{item.weightLabel}}</span>
+              <span class="tag tag-accent">{{item.proteinLabel}}</span>
+              <span class="tag tag-outline">{{item.caloriesLabel}}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{showNoResults}}" hint-placeholder-val="{{false}}">
+      <div style="text-align:center;padding:80px 20px">
+        <p class="text-muted" style="font-size:14px">找不到符合「{{search}}」的紀錄</p>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{showEmpty}}" hint-placeholder-val="{{false}}">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:var(--space-3);text-align:center;padding:100px 20px">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.35"><rect x="3" y="3" width="18" height="18"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+        <h3 style="margin:0">還沒有任何紀錄</h3>
+        <p class="text-muted" style="margin:0;max-width:320px">拍下食物照片，記錄重量、蛋白質與熱量，開始建立你的資料庫</p>
+        <button class="btn btn-primary" onClick="{{onOpenAdd}}" style="margin-top:var(--space-2)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          新增第一筆紀錄
+        </button>
+      </div>
+    </sc-if>
+  </main>
+
+  <sc-if value="{{hasSelection}}" hint-placeholder-val="{{false}}">
+    <div style="position:fixed;left:50%;bottom:24px;transform:translateX(-50%);display:flex;align-items:center;gap:var(--space-6);background:var(--color-text);color:var(--color-bg);padding:14px 24px;box-shadow:var(--shadow-lg);z-index:50;flex-wrap:wrap;justify-content:center;max-width:92vw">
+      <div style="font-size:13px;font-weight:600;white-space:nowrap">已選 {{selectedCount}} 項</div>
+      <div style="display:flex;gap:var(--space-6)">
+        <div style="text-align:center">
+          <div style="font-family:var(--font-heading);font-weight:800;font-size:18px;color:var(--color-accent-400)">{{totalWeightLabel}}</div>
+          <div style="font-size:10px;opacity:0.7;letter-spacing:0.06em;text-transform:uppercase">重量</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-family:var(--font-heading);font-weight:800;font-size:18px;color:var(--color-accent-400)">{{totalProteinLabel}}</div>
+          <div style="font-size:10px;opacity:0.7;letter-spacing:0.06em;text-transform:uppercase">蛋白質</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-family:var(--font-heading);font-weight:800;font-size:18px;color:var(--color-accent-400)">{{totalCaloriesLabel}}</div>
+          <div style="font-size:10px;opacity:0.7;letter-spacing:0.06em;text-transform:uppercase">熱量</div>
+        </div>
+      </div>
+      <button class="btn btn-secondary" style="border-color:color-mix(in srgb, var(--color-bg) 40%, transparent);color:var(--color-bg)" onClick="{{onClearSelection}}">清除選取</button>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{modalOpen}}" hint-placeholder-val="{{false}}">
+    <div class="dialog-backdrop" onClick="{{onCloseModal}}">
+      <div class="dialog" style="width:min(480px,92vw)" onClick="{{stopPropagation}}">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div class="dialog-title">{{modalTitle}}</div>
+          <button style="width:32px;height:32px;padding:0;border:none;background:transparent;color:var(--color-text);cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="color: var(--color-accent)" onClick="{{onCloseModal}}">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+        <div class="dialog-body" style="display:flex;flex-direction:column;gap:var(--space-3)">
+          <div style="display:flex;gap:var(--space-3)">
+            <div onClick="{{triggerFileInput}}" style="width:120px;height:120px;flex:none;background:var(--color-bg);border:1px dashed var(--color-divider);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;overflow:hidden">
+              <sc-if value="{{formImage}}" hint-placeholder-val="{{false}}">
+                <img src="{{formImage}}" style="width:100%;height:100%;object-fit:cover" />
+              </sc-if>
+              <sc-if value="{{noFormImage}}" hint-placeholder-val="{{true}}">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.5"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                <span style="font-size:11px;opacity:0.55">上傳照片</span>
+              </sc-if>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;gap:var(--space-2)">
+              <div class="field">
+                <label>食物名稱</label>
+                <input class="input" type="text" value="{{formName}}" onChange="{{onNameChange}}" placeholder="例如：雞胸肉" />
+              </div>
+            </div>
+          </div>
+          <input type="file" accept="image/*" ref="{{fileInputRef}}" onChange="{{onFileChange}}" />
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-2)">
+            <div class="field"><label>重量 (g)</label><input class="input" type="number" value="{{formWeight}}" onChange="{{onWeightChange}}" placeholder="0" /></div>
+            <div class="field"><label>蛋白質 (g)</label><input class="input" type="number" value="{{formProtein}}" onChange="{{onProteinChange}}" placeholder="0" /></div>
+            <div class="field"><label>熱量 (kcal)</label><input class="input" type="number" value="{{formCalories}}" onChange="{{onCaloriesChange}}" placeholder="0" /></div>
+          </div>
+        </div>
+        <div class="dialog-actions" style="justify-content:space-between">
+          <div>
+            <sc-if value="{{isEditing}}" hint-placeholder-val="{{false}}">
+              <button class="btn btn-secondary" style="color:var(--color-accent-700)" onClick="{{onDeleteFromModal}}">刪除</button>
+            </sc-if>
+          </div>
+          <div style="display:flex;gap:var(--space-2)">
+            <button class="btn btn-secondary" onClick="{{onCloseModal}}">取消</button>
+            <button class="btn btn-primary" onClick="{{onSave}}" disabled="{{disableSave}}">儲存</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:900},&quot;sortOrder&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;newest&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;newest&quot;,&quot;oldest&quot;,&quot;name&quot;],&quot;section&quot;:&quot;行為&quot;},&quot;grayscalePhotos&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;外觀&quot;},&quot;confirmBeforeDelete&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;行為&quot;}}">
+class Component extends DCLogic {
+  state = {
+    items: [],
+    selectedIds: [],
+    search: '',
+    modalOpen: false,
+    editingId: null,
+    formName: '',
+    formWeight: '',
+    formProtein: '',
+    formCalories: '',
+    formImage: null,
+  };
+
+  fileInputRef = React.createRef();
+
+  componentDidMount() {
+    try {
+      const raw = localStorage.getItem('foodlog_items_v1');
+      if (raw) this.setState({ items: JSON.parse(raw) });
+    } catch (e) {}
+  }
+
+  persist(items) {
+    try { localStorage.setItem('foodlog_items_v1', JSON.stringify(items)); } catch (e) {}
+  }
+
+  onSearchChange = (e) => this.setState({ search: e.target.value });
+
+  openAddModal = () => this.setState({
+    modalOpen: true, editingId: null,
+    formName: '', formWeight: '', formProtein: '', formCalories: '', formImage: null,
+  });
+
+  openEditModal = (item) => this.setState({
+    modalOpen: true, editingId: item.id,
+    formName: item.name, formWeight: String(item.weight ?? ''),
+    formProtein: String(item.protein ?? ''), formCalories: String(item.calories ?? ''),
+    formImage: item.imageData || null,
+  });
+
+  closeModal = () => this.setState({ modalOpen: false });
+
+  triggerFileInput = () => { if (this.fileInputRef.current) this.fileInputRef.current.click(); };
+
+  onFileChange = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => this.setState({ formImage: reader.result });
+    reader.readAsDataURL(file);
+  };
+
+  saveForm = () => {
+    const name = this.state.formName.trim();
+    if (!name) return;
+    const weight = parseFloat(this.state.formWeight) || 0;
+    const protein = parseFloat(this.state.formProtein) || 0;
+    const calories = parseFloat(this.state.formCalories) || 0;
+    const imageData = this.state.formImage;
+    let items;
+    if (this.state.editingId) {
+      items = this.state.items.map(it => it.id === this.state.editingId
+        ? { ...it, name, weight, protein, calories, imageData } : it);
+    } else {
+      const newItem = {
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+        name, weight, protein, calories, imageData, createdAt: Date.now(),
+      };
+      items = [newItem, ...this.state.items];
+    }
+    this.persist(items);
+    this.setState({ items, modalOpen: false });
+  };
+
+  deleteItem = (id) => {
+    const needConfirm = this.props.confirmBeforeDelete ?? true;
+    if (needConfirm && !window.confirm('確定要刪除這筆紀錄嗎？')) return;
+    const items = this.state.items.filter(it => it.id !== id);
+    const selectedIds = this.state.selectedIds.filter(sid => sid !== id);
+    this.persist(items);
+    this.setState({ items, selectedIds });
+  };
+
+  deleteFromModal = () => {
+    this.deleteItem(this.state.editingId);
+    this.setState({ modalOpen: false });
+  };
+
+  toggleSelect = (id) => this.setState(s => ({
+    selectedIds: s.selectedIds.includes(id) ? s.selectedIds.filter(x => x !== id) : [...s.selectedIds, id],
+  }));
+
+  clearSelection = () => this.setState({ selectedIds: [] });
+
+  stopPropagation = (e) => e.stopPropagation();
+
+  renderVals() {
+    const { items, selectedIds, search, modalOpen, editingId, formName, formWeight, formProtein, formCalories, formImage } = this.state;
+    const gray = this.props.grayscalePhotos ?? true;
+    const sortOrder = this.props.sortOrder ?? 'newest';
+
+    const q = search.trim().toLowerCase();
+    let filtered = q ? items.filter(it => it.name.toLowerCase().includes(q)) : items.slice();
+    filtered = [...filtered];
+    if (sortOrder === 'newest') filtered.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    else if (sortOrder === 'oldest') filtered.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+    else if (sortOrder === 'name') filtered.sort((a, b) => a.name.localeCompare(b.name, 'zh-Hant'));
+
+    const displayItems = filtered.map(it => {
+      const selected = selectedIds.includes(it.id);
+      return {
+        id: it.id,
+        name: it.name,
+        imageData: it.imageData,
+        hasImage: !!it.imageData,
+        noImage: !it.imageData,
+        imgStyle: { width: '100%', height: '100%', objectFit: 'cover', filter: gray ? 'grayscale(1) contrast(1.08)' : 'none' },
+        cardStyle: {
+          display: 'flex', flexDirection: 'column', gap: 'var(--space-2)', padding: 'var(--space-2)',
+          background: 'var(--color-surface)', cursor: 'pointer', transition: 'border-color .15s ease',
+          border: '2px solid ' + (selected ? 'var(--color-accent)' : 'transparent'),
+        },
+        weightLabel: it.weight + ' g',
+        proteinLabel: it.protein + ' g 蛋白質',
+        caloriesLabel: it.calories + ' kcal',
+        selected,
+        borderColor: selected ? 'var(--color-accent)' : 'transparent',
+        onToggle: () => this.toggleSelect(it.id),
+        onEdit: (e) => { e.stopPropagation(); this.openEditModal(it); },
+        onDelete: (e) => { e.stopPropagation(); this.deleteItem(it.id); },
+      };
+    });
+
+    const selectedItems = items.filter(it => selectedIds.includes(it.id));
+    const totalWeight = selectedItems.reduce((s, it) => s + (it.weight || 0), 0);
+    const totalProtein = selectedItems.reduce((s, it) => s + (it.protein || 0), 0);
+    const totalCalories = selectedItems.reduce((s, it) => s + (it.calories || 0), 0);
+
+    return {
+      items: displayItems,
+      showGrid: displayItems.length > 0,
+      showNoResults: items.length > 0 && displayItems.length === 0,
+      showEmpty: items.length === 0,
+      search,
+      onSearchChange: this.onSearchChange,
+      onOpenAdd: this.openAddModal,
+      hasSelection: selectedIds.length > 0,
+      selectedCount: selectedIds.length,
+      totalWeightLabel: totalWeight + ' g',
+      totalProteinLabel: totalProtein + ' g',
+      totalCaloriesLabel: totalCalories + ' kcal',
+      onClearSelection: this.clearSelection,
+      modalOpen,
+      modalTitle: editingId ? '編輯紀錄' : '新增紀錄',
+      isEditing: !!editingId,
+      formName, formWeight, formProtein, formCalories, formImage,
+      noFormImage: !formImage,
+      onNameChange: (e) => this.setState({ formName: e.target.value }),
+      onWeightChange: (e) => this.setState({ formWeight: e.target.value }),
+      onProteinChange: (e) => this.setState({ formProtein: e.target.value }),
+      onCaloriesChange: (e) => this.setState({ formCalories: e.target.value }),
+      onFileChange: this.onFileChange,
+      triggerFileInput: this.triggerFileInput,
+      fileInputRef: this.fileInputRef,
+      onSave: this.saveForm,
+      disableSave: formName.trim().length === 0,
+      onCloseModal: this.closeModal,
+      onDeleteFromModal: this.deleteFromModal,
+      stopPropagation: this.stopPropagation,
+    };
+  }
+}
+
+</script>
+</body>
+</html>
