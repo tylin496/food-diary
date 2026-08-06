@@ -539,19 +539,25 @@ body { background: var(--color-bg); }
 .food-card .sub-item-chip {
   display: inline-flex; align-items: center; gap: 4px;
   font-size: 11px;
-  color: color-mix(in srgb, var(--color-text) 65%, transparent);
-  background: transparent;
-  border: 1px solid var(--color-divider);
-  padding: 1px 6px 1px 1px;
-  transition: opacity 150ms ease, background-color 150ms ease, border-color 150ms ease;
+  color: var(--color-text);
+  background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 45%, transparent);
+  padding: 1px 6px;
+  transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease;
 }
 .food-card .sub-item-chip.is-excluded {
-  opacity: 0.5; text-decoration: line-through;
+  color: color-mix(in srgb, var(--color-text) 45%, transparent);
+  background: transparent;
+  border-color: var(--color-divider);
 }
 .food-card .sub-item-chip.is-toggleable {
   cursor: pointer;
 }
 .food-card .sub-item-chip.is-toggleable:hover {
+  background: color-mix(in srgb, var(--color-accent) 24%, transparent);
+  border-color: color-mix(in srgb, var(--color-accent) 65%, transparent);
+}
+.food-card .sub-item-chip.is-excluded.is-toggleable:hover {
   background: color-mix(in srgb, var(--color-text) 6%, transparent);
   border-color: color-mix(in srgb, var(--color-text) 45%, transparent);
 }
