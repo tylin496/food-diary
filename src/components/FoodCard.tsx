@@ -12,10 +12,17 @@ interface FoodCardProps {
 
 export function FoodCard({ item, selected, grayscale, onToggle, onEdit, onDelete }: FoodCardProps) {
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       className={`food-card${selected ? ' is-selected' : ''}`}
       onClick={() => onToggle(item.id)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onToggle(item.id)
+        }
+      }}
       aria-pressed={selected}
     >
       <div className="photo">
@@ -58,6 +65,6 @@ export function FoodCard({ item, selected, grayscale, onToggle, onEdit, onDelete
         <span className="tag tag-accent">{item.protein} g 蛋白質</span>
         <span className="tag tag-outline">{item.calories} kcal</span>
       </div>
-    </button>
+    </div>
   )
 }

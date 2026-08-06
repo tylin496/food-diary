@@ -1,6 +1,7 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { Camera, X } from 'lucide-react'
 import type { FoodDraft } from '../types'
+import { uploadToCloudinary } from '../cloudinary'
 
 interface FoodModalProps {
   draft: FoodDraft
@@ -13,15 +14,25 @@ interface FoodModalProps {
 
 export function FoodModal({ draft, isEditing, onChange, onSave, onCancel, onDelete }: FoodModalProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [preview, setPreview] = useState<string | null>(draft.imageUrl)
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState(false)
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    const reader = new FileReader()
-    reader.onload = () => {
-      onChange({ ...draft, imageUrl: reader.result as string })
+
+    setPreview(URL.createObjectURL(file))
+    setUploadError(false)
+    setUploading(true)
+    try {
+      const url = await uploadToCloudinary(file)
+      onChange({ ...draft, imageUrl: url })
+    } catch {
+      setUploadError(true)
+    } finally {
+      setUploading(false)
     }
-    reader.readAsDataURL(file)
   }
 
   return (
@@ -39,14 +50,15 @@ export function FoodModal({ draft, isEditing, onChange, onSave, onCancel, onDele
 
         <div className="modal-photo-row">
           <div className="photo-upload-box" onClick={() => fileInputRef.current?.click()}>
-            {draft.imageUrl ? (
-              <img src={draft.imageUrl} alt="食物照片預覽" />
+            {preview ? (
+              <img src={preview} alt="食物照片預覽" />
             ) : (
               <>
                 <Camera size={22} />
                 <span>上傳照片</span>
               </>
             )}
+            {uploading && <span>上傳中…</span>}
             <input
               ref={fileInputRef}
               type="file"
@@ -56,6 +68,11 @@ export function FoodModal({ draft, isEditing, onChange, onSave, onCancel, onDele
             />
           </div>
           <div className="field">
+            {uploadError && (
+              <div style={{ color: 'var(--color-accent)', fontSize: 12, marginBottom: 6 }}>
+                照片上傳失敗，請重試
+              </div>
+            )}
             <label htmlFor="food-name">食物名稱</label>
             <input
               id="food-name"
@@ -121,7 +138,7 @@ export function FoodModal({ draft, isEditing, onChange, onSave, onCancel, onDele
             <button
               type="button"
               className="btn btn-primary"
-              disabled={draft.name.trim().length === 0}
+              disabled={draft.name.trim().length === 0 || uploading}
               onClick={onSave}
             >
               儲存
