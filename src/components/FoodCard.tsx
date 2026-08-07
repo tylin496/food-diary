@@ -53,8 +53,34 @@ export function FoodCard({
   const scrolling = useRef(false)
   const scrollTarget = useRef<HTMLElement | null>(null)
   const lastPointerY = useRef(0)
+  const lastMoveTime = useRef(0)
+  const velocityY = useRef(0)
+  const momentumFrame = useRef<number | null>(null)
   const lastPointerType = useRef<string>('mouse')
   const [holding, setHolding] = useState(false)
+
+  const stopMomentum = () => {
+    if (momentumFrame.current !== null) {
+      cancelAnimationFrame(momentumFrame.current)
+      momentumFrame.current = null
+    }
+  }
+
+  // Native touch scrolling is blocked on this element (touch-action: none, below),
+  // so once we take a gesture over as a manual scroll we also have to fake the
+  // momentum/glide a real scroll would have had, or it just stops dead on release.
+  const startMomentum = (target: HTMLElement, initialVelocity: number) => {
+    let velocity = initialVelocity
+    let lastTs: number | null = null
+    const step = (ts: number) => {
+      const dt = lastTs === null ? 16 : ts - lastTs
+      lastTs = ts
+      target.scrollBy(0, -velocity * dt)
+      velocity *= Math.pow(0.95, dt / 16)
+      momentumFrame.current = Math.abs(velocity) > 0.02 ? requestAnimationFrame(step) : null
+    }
+    momentumFrame.current = requestAnimationFrame(step)
+  }
 
   const clearLongPress = () => {
     if (longPressTimer.current !== null) {
@@ -67,6 +93,7 @@ export function FoodCard({
   }
 
   const handlePhotoPointerDown = (e: React.PointerEvent) => {
+    stopMomentum()
     lastPointerType.current = e.pointerType
     suppressClick.current = false
     if (!reorderEnabled) return
@@ -83,8 +110,13 @@ export function FoodCard({
 
   const handlePhotoPointerMove = (e: React.PointerEvent) => {
     if (scrolling.current) {
-      scrollTarget.current?.scrollBy(0, lastPointerY.current - e.clientY)
+      const now = performance.now()
+      const dt = Math.max(1, now - lastMoveTime.current)
+      const dy = lastPointerY.current - e.clientY
+      scrollTarget.current?.scrollBy(0, dy)
+      velocityY.current = -dy / dt
       lastPointerY.current = e.clientY
+      lastMoveTime.current = now
       return
     }
     if (!pointerStart.current) return
@@ -96,10 +128,19 @@ export function FoodCard({
         suppressClick.current = true
         scrolling.current = true
         lastPointerY.current = e.clientY
+        lastMoveTime.current = performance.now()
+        velocityY.current = 0
         scrollTarget.current = (e.target as HTMLElement).closest<HTMLElement>('.page-scroll')
         scrollTarget.current?.scrollBy(0, -dy)
       }
     }
+  }
+
+  const handlePhotoPointerUp = () => {
+    if (scrolling.current && scrollTarget.current) {
+      startMomentum(scrollTarget.current, velocityY.current)
+    }
+    clearLongPress()
   }
 
   return (
@@ -132,7 +173,7 @@ export function FoodCard({
         style={reorderEnabled ? { touchAction: 'none' } : undefined}
         onPointerDown={handlePhotoPointerDown}
         onPointerMove={handlePhotoPointerMove}
-        onPointerUp={clearLongPress}
+        onPointerUp={handlePhotoPointerUp}
         onPointerCancel={clearLongPress}
         onPointerLeave={clearLongPress}
         onContextMenu={(e) => {
