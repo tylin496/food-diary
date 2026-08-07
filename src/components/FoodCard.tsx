@@ -43,6 +43,16 @@ export function FoodCard({
   const longPressTimer = useRef<number | null>(null)
   const pointerStart = useRef<{ x: number; y: number } | null>(null)
   const longPressFired = useRef(false)
+  // Set when a move-past-tolerance turns out to be a scroll attempt rather than
+  // a long-press-drag, so the click that pointerup still synthesizes gets eaten
+  // instead of toggling the card.
+  const suppressClick = useRef(false)
+  // touch-action: none (below) stops the browser from ever taking over the
+  // gesture as a native scroll, so once we decide it's a scroll we have to
+  // replay it by hand onto the page scroller.
+  const scrolling = useRef(false)
+  const scrollTarget = useRef<HTMLElement | null>(null)
+  const lastPointerY = useRef(0)
   const lastPointerType = useRef<string>('mouse')
   const [holding, setHolding] = useState(false)
 
@@ -52,13 +62,16 @@ export function FoodCard({
       longPressTimer.current = null
     }
     pointerStart.current = null
+    scrolling.current = false
     setHolding(false)
   }
 
   const handlePhotoPointerDown = (e: React.PointerEvent) => {
     lastPointerType.current = e.pointerType
+    suppressClick.current = false
     if (!reorderEnabled) return
     pointerStart.current = { x: e.clientX, y: e.clientY }
+    lastPointerY.current = e.clientY
     setHolding(true)
     longPressTimer.current = window.setTimeout(() => {
       longPressTimer.current = null
@@ -69,11 +82,23 @@ export function FoodCard({
   }
 
   const handlePhotoPointerMove = (e: React.PointerEvent) => {
+    if (scrolling.current) {
+      scrollTarget.current?.scrollBy(0, lastPointerY.current - e.clientY)
+      lastPointerY.current = e.clientY
+      return
+    }
     if (!pointerStart.current) return
     const dx = e.clientX - pointerStart.current.x
     const dy = e.clientY - pointerStart.current.y
     if (Math.hypot(dx, dy) > LONG_PRESS_MOVE_TOLERANCE) {
       clearLongPress()
+      if (e.pointerType !== 'mouse') {
+        suppressClick.current = true
+        scrolling.current = true
+        lastPointerY.current = e.clientY
+        scrollTarget.current = (e.target as HTMLElement).closest<HTMLElement>('.page-scroll')
+        scrollTarget.current?.scrollBy(0, -dy)
+      }
     }
   }
 
@@ -86,6 +111,10 @@ export function FoodCard({
       onClick={() => {
         if (longPressFired.current) {
           longPressFired.current = false
+          return
+        }
+        if (suppressClick.current) {
+          suppressClick.current = false
           return
         }
         onToggle(item.id)
