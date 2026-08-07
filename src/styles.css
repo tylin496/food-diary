@@ -789,6 +789,11 @@ body { background: var(--bg); }
   width: min(440px, 100%); gap: 16px; padding: 18px;
   border-radius: var(--radius-card);
   background: var(--bg-card);
+  /* --bg-card is translucent in dark mode (for the frosted food-card look),
+     which otherwise lets the grid card behind the dialog read through —
+     e.g. its edit-pencil button ghosting into the sub-item picker rows. */
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border: 1px solid var(--rule);
   font-family: var(--font-ui);
 }
