@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Camera, Check, GripVertical, Plus, X } from 'lucide-react'
 import type { FoodDraft, FoodSubItemDraft } from '../types'
 import { uploadToCloudinary } from '../cloudinary'
@@ -105,29 +105,145 @@ export function FoodModal({
     onChange({ ...draft, subItems: draft.subItems.filter((sub) => sub.id !== id) })
   }
 
+  // Mirrors the food-grid card drag system in App.tsx: the grabbed row follows
+  // the pointer with a spring lag, siblings FLIP-animate into their new slot as
+  // the order changes live, and everything settles back with the same
+  // --motion-flip-bold ease on release.
   const subItemsRef = useRef<HTMLDivElement>(null)
-  const dragIdRef = useRef<string | null>(null)
+  const dragMetaRef = useRef<{ id: string; grabOffsetY: number } | null>(null)
+  const lastPointerYRef = useRef(0)
+  const springOffsetRef = useRef<number | null>(null)
+  const dragRafRef = useRef<number | null>(null)
+  const prevSubItemRectsRef = useRef<Record<string, DOMRect> | null>(null)
   const [draggingSubItemId, setDraggingSubItemId] = useState<string | null>(null)
+
+  const findSubItemRowEl = (id: string): HTMLElement | null =>
+    subItemsRef.current?.querySelector<HTMLElement>(`[data-sub-item-id="${CSS.escape(id)}"]`) ?? null
+
+  const captureSubItemRects = (excludeId?: string) => {
+    const container = subItemsRef.current
+    if (!container) return
+    const rects: Record<string, DOMRect> = {}
+    container.querySelectorAll<HTMLElement>('[data-sub-item-id]').forEach((el) => {
+      const id = el.dataset.subItemId
+      if (id && id !== excludeId) rects[id] = el.getBoundingClientRect()
+    })
+    prevSubItemRectsRef.current = rects
+  }
+
+  const computeSubItemDragOffsetY = (el: HTMLElement, clientY: number) => {
+    const meta = dragMetaRef.current
+    if (!meta) return 0
+    const saved = el.style.transform
+    el.style.transform = ''
+    const rect = el.getBoundingClientRect()
+    el.style.transform = saved
+    return clientY - meta.grabOffsetY - rect.top
+  }
+
+  const applySubItemDragTransform = (el: HTMLElement, y: number) => {
+    el.style.transform = `translateY(${y}px) scale(1.02)`
+  }
+
+  const SUB_ITEM_SPRING_FACTOR = 0.35
+
+  const stopSubItemSpringLoop = () => {
+    if (dragRafRef.current !== null) {
+      cancelAnimationFrame(dragRafRef.current)
+      dragRafRef.current = null
+    }
+    springOffsetRef.current = null
+  }
+
+  const startSubItemSpringLoop = (id: string) => {
+    const step = () => {
+      const meta = dragMetaRef.current
+      const el = meta && meta.id === id ? findSubItemRowEl(id) : null
+      const current = springOffsetRef.current
+      if (!meta || !el || current === null) {
+        dragRafRef.current = null
+        return
+      }
+      const target = computeSubItemDragOffsetY(el, lastPointerYRef.current)
+      const next = current + (target - current) * SUB_ITEM_SPRING_FACTOR
+      springOffsetRef.current = next
+      applySubItemDragTransform(el, next)
+      dragRafRef.current = requestAnimationFrame(step)
+    }
+    dragRafRef.current = requestAnimationFrame(step)
+  }
+
+  // FLIP: after a live reorder moves rows in the DOM, replay each sibling from
+  // its pre-reorder position back to rest so the shuffle reads as motion.
+  useLayoutEffect(() => {
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (!prevSubItemRectsRef.current) return
+    const rects = prevSubItemRectsRef.current
+    prevSubItemRectsRef.current = null
+    const dragId = dragMetaRef.current?.id
+    if (reducedMotion) return
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        Object.keys(rects).forEach((id) => {
+          if (id === dragId) return
+          const el = findSubItemRowEl(id)
+          if (!el) return
+          const prev = rects[id]
+          const now = el.getBoundingClientRect()
+          const dy = prev.top - now.top
+          if (Math.abs(dy) < 0.5) return
+          el.style.transition = 'none'
+          el.style.transform = `translateY(${dy}px)`
+          requestAnimationFrame(() => {
+            el.style.transition = 'transform var(--motion-flip-bold)'
+            el.style.transform = ''
+            const handleEnd = () => {
+              el.style.transition = ''
+              el.removeEventListener('transitionend', handleEnd)
+            }
+            el.addEventListener('transitionend', handleEnd)
+          })
+        })
+      })
+    })
+  })
 
   const handleSubItemGripDown = (e: React.PointerEvent<HTMLButtonElement>, id: string) => {
     e.preventDefault()
+    const el = findSubItemRowEl(id)
+    if (!el) return
     e.currentTarget.setPointerCapture(e.pointerId)
-    dragIdRef.current = id
+    const rect = el.getBoundingClientRect()
+    dragMetaRef.current = { id, grabOffsetY: e.clientY - rect.top }
+    lastPointerYRef.current = e.clientY
+    el.style.transition = 'transform 140ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 140ms ease'
+    el.style.zIndex = '2'
+    el.style.boxShadow = 'var(--shadow-lg)'
+    const startOffset = computeSubItemDragOffsetY(el, e.clientY)
+    applySubItemDragTransform(el, startOffset)
     setDraggingSubItemId(id)
+    window.setTimeout(() => {
+      if (dragMetaRef.current?.id !== id) return
+      el.style.transition = 'none'
+      springOffsetRef.current = startOffset
+      startSubItemSpringLoop(id)
+    }, 140)
   }
 
   const handleSubItemGripMove = (e: React.PointerEvent<HTMLButtonElement>) => {
-    const draggedId = dragIdRef.current
-    if (!draggedId || !subItemsRef.current) return
-    const draggedIndex = draft.subItems.findIndex((sub) => sub.id === draggedId)
+    const dragging = dragMetaRef.current
+    if (!dragging || !subItemsRef.current) return
+    lastPointerYRef.current = e.clientY
+    const draggedIndex = draft.subItems.findIndex((sub) => sub.id === dragging.id)
     if (draggedIndex === -1) return
-    const rows = Array.from(subItemsRef.current.querySelectorAll<HTMLElement>('.sub-item-row'))
+    const rows = Array.from(subItemsRef.current.querySelectorAll<HTMLElement>('[data-sub-item-id]'))
     for (let i = 0; i < rows.length; i++) {
       if (i === draggedIndex) continue
       const rect = rows[i].getBoundingClientRect()
       const mid = rect.top + rect.height / 2
       const crossed = (i < draggedIndex && e.clientY < mid) || (i > draggedIndex && e.clientY > mid)
       if (crossed) {
+        captureSubItemRects(dragging.id)
         const next = [...draft.subItems]
         const [moved] = next.splice(draggedIndex, 1)
         next.splice(i, 0, moved)
@@ -138,9 +254,27 @@ export function FoodModal({
   }
 
   const handleSubItemGripUp = () => {
-    dragIdRef.current = null
+    const meta = dragMetaRef.current
+    stopSubItemSpringLoop()
+    if (meta) {
+      const el = findSubItemRowEl(meta.id)
+      if (el) {
+        el.style.transition = 'transform var(--motion-flip-bold), box-shadow 200ms ease'
+        el.style.transform = ''
+        window.setTimeout(() => {
+          el.style.boxShadow = ''
+          el.style.zIndex = ''
+          el.style.transition = ''
+        }, 340)
+      }
+    }
+    dragMetaRef.current = null
     setDraggingSubItemId(null)
   }
+
+  useEffect(() => {
+    return () => stopSubItemSpringLoop()
+  }, [])
 
   const hasSubItems = draft.subItems.length > 0
   const selectedSubItems = draft.subItems.filter((sub) => sub.selected)
@@ -299,6 +433,7 @@ export function FoodModal({
                 <div
                   className={`sub-item-row${sub.selected ? '' : ' is-excluded'}${sub.id === draggingSubItemId ? ' is-dragging' : ''}`}
                   key={sub.id}
+                  data-sub-item-id={sub.id}
                 >
                   <div className="sub-item-row-top">
                     <button
