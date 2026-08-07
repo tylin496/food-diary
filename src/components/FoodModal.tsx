@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Camera, Check, Plus, X } from 'lucide-react'
 import type { FoodDraft, FoodSubItemDraft } from '../types'
 import { uploadToCloudinary } from '../cloudinary'
+import { useDialogDismiss } from '../useDialogDismiss'
 import { generateId, roundAmount, toNumber } from '../utils'
 
 interface FoodModalProps {
@@ -43,6 +44,8 @@ export function FoodModal({
       if (saveTimerRef.current !== null) window.clearTimeout(saveTimerRef.current)
     }
   }, [])
+
+  const backdropProps = useDialogDismiss(onCancel)
 
   const handleSaveClick = () => {
     if (draft.name.trim().length === 0 || saveState === 'success') return
@@ -133,7 +136,7 @@ export function FoodModal({
   }
 
   return (
-    <div className={`dialog-backdrop${closing ? ' is-closing' : ''}`}>
+    <div className={`dialog-backdrop${closing ? ' is-closing' : ''}`} {...backdropProps}>
       <div
         className={`dialog${closing ? ' is-closing' : ''}`}
         onClick={(e) => e.stopPropagation()}

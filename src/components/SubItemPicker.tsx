@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Check, X } from 'lucide-react'
 import type { FoodItem } from '../types'
+import { useDialogDismiss } from '../useDialogDismiss'
+import { formatAmount } from '../utils'
 
 interface SubItemPickerProps {
   item: FoodItem
@@ -21,6 +23,8 @@ export function SubItemPicker({ item, onConfirm, onCancel }: SubItemPickerProps)
     setClosing(true)
     window.setTimeout(run, 180)
   }
+
+  const backdropProps = useDialogDismiss(() => dismiss(onCancel))
 
   const toggle = (id: string) => {
     setChosen((prev) => {
@@ -43,7 +47,7 @@ export function SubItemPicker({ item, onConfirm, onCancel }: SubItemPickerProps)
     )
 
   return (
-    <div className={`dialog-backdrop${closing ? ' is-closing' : ''}`}>
+    <div className={`dialog-backdrop${closing ? ' is-closing' : ''}`} {...backdropProps}>
       <div
         className={`dialog${closing ? ' is-closing' : ''}`}
         onClick={(e) => e.stopPropagation()}
@@ -76,8 +80,8 @@ export function SubItemPicker({ item, onConfirm, onCancel }: SubItemPickerProps)
                 </span>
                 <span className="picker-name">{sub.name || '未命名'}</span>
                 <span className="picker-stats">
-                  {sub.calories} kcal
-                  {sub.protein > 0 && ` · ${sub.protein} g`}
+                  {formatAmount(sub.calories)} kcal
+                  {sub.protein > 0 && ` · ${formatAmount(sub.protein)} g`}
                 </span>
               </button>
             )
@@ -85,10 +89,10 @@ export function SubItemPicker({ item, onConfirm, onCancel }: SubItemPickerProps)
         </div>
 
         <div className="picker-total">
-          <span className="picker-total-calories">{totals.calories} kcal</span>
+          <span className="picker-total-calories">{formatAmount(totals.calories)} kcal</span>
           <span className="picker-total-secondary">
-            {totals.weight > 0 && `${totals.weight} g · `}
-            {totals.protein} g 蛋白質
+            {totals.weight > 0 && `${formatAmount(totals.weight)} g · `}
+            {formatAmount(totals.protein)} g 蛋白質
           </span>
         </div>
 
