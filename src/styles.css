@@ -427,7 +427,7 @@ textarea.input { min-height: 90px; resize: vertical; }
 
 /* — dialog — */
 .dialog-backdrop {
-  position: fixed; inset: 0; display: grid; place-items: center;
+  position: fixed; inset: 0; z-index: 100; display: grid; place-items: center;
   padding: var(--space-4);
   background: color-mix(in srgb, var(--color-neutral-900) 50%, transparent);
   animation: backdrop-in 200ms ease;
@@ -476,16 +476,27 @@ html, body, #root { height: 100%; }
 body { background: var(--bg); }
 
 /* — page scroller — */
+/* Installed standalone under black-translucent, the page draws under the status
+   bar and over the home indicator, so both ends carry the safe-area inset. In a
+   browser the insets are 0 and these collapse to the plain values. */
 .page-scroll {
   height: 100%; overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  padding: 28px 24px 104px;
+  padding:
+    calc(28px + env(safe-area-inset-top))
+    24px
+    calc(104px + env(safe-area-inset-bottom));
   background: var(--page-bg);
 }
 .page-scroll::-webkit-scrollbar { display: none; }
 @media (max-width: 430px) {
-  .page-scroll { padding: 22px 14px 96px; }
+  .page-scroll {
+    padding:
+      calc(22px + env(safe-area-inset-top))
+      14px
+      calc(96px + env(safe-area-inset-bottom));
+  }
 }
 .page-content { max-width: 1000px; margin: 0 auto; }
 
@@ -713,7 +724,9 @@ body { background: var(--bg); }
 
 /* — floating selection summary bar — Liquid Glass capsule — */
 .selection-bar {
-  position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%);
+  /* Fixed to the viewport, so it clears the home indicator on its own. */
+  position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
   z-index: 50;
   width: min(calc(100% - 32px), 520px);
   display: flex; align-items: center; flex-wrap: wrap; justify-content: center;
