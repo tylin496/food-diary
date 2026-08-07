@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { Camera, Check, Pencil } from 'lucide-react'
 import type { FoodItem } from '../types'
 import { getFoodTotals } from '../types'
+import { formatAmount } from '../utils'
 
 const LONG_PRESS_MS = 450
 const LONG_PRESS_MOVE_TOLERANCE = 10
@@ -153,7 +154,7 @@ export function FoodCard({
       <div className="food-name">{item.name}</div>
       {weightAsSubItem && (
         <div className="sub-items-summary">
-          <span className="sub-item-chip">{item.weight} g</span>
+          <span className="sub-item-chip">{formatAmount(item.weight)} g</span>
         </div>
       )}
       {subItems.length > 0 && (
@@ -177,10 +178,10 @@ export function FoodCard({
         </div>
       )}
       <div className="meta-row">
-        <span className="stat-calories">{totals.calories} kcal</span>
+        <span className="stat-calories">{formatAmount(totals.calories)} kcal</span>
         <span className="meta-secondary">
-          {!weightAsSubItem && totals.weight > 0 && `${totals.weight} g · `}
-          {totals.protein} g 蛋白質
+          {!weightAsSubItem && totals.weight > 0 && `${formatAmount(totals.weight)} g · `}
+          {formatAmount(totals.protein)} g 蛋白質
         </span>
       </div>
     </div>

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Camera, Check, Plus, X } from 'lucide-react'
 import type { FoodDraft, FoodSubItemDraft } from '../types'
 import { uploadToCloudinary } from '../cloudinary'
-import { generateId, toNumber } from '../utils'
+import { generateId, roundAmount, toNumber } from '../utils'
 
 interface FoodModalProps {
   itemId: string
@@ -104,12 +104,15 @@ export function FoodModal({
 
   const hasSubItems = draft.subItems.length > 0
   const selectedSubItems = draft.subItems.filter((sub) => sub.selected)
-  const totalWeight =
-    toNumber(draft.weight) + selectedSubItems.reduce((sum, sub) => sum + toNumber(sub.weight), 0)
-  const totalCalories =
-    toNumber(draft.calories) + selectedSubItems.reduce((sum, sub) => sum + toNumber(sub.calories), 0)
-  const totalProtein =
-    toNumber(draft.protein) + selectedSubItems.reduce((sum, sub) => sum + toNumber(sub.protein), 0)
+  const totalWeight = roundAmount(
+    toNumber(draft.weight) + selectedSubItems.reduce((sum, sub) => sum + toNumber(sub.weight), 0),
+  )
+  const totalCalories = roundAmount(
+    toNumber(draft.calories) + selectedSubItems.reduce((sum, sub) => sum + toNumber(sub.calories), 0),
+  )
+  const totalProtein = roundAmount(
+    toNumber(draft.protein) + selectedSubItems.reduce((sum, sub) => sum + toNumber(sub.protein), 0),
+  )
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]

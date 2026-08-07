@@ -6,6 +6,16 @@ export function toNumber(value: string): number {
   return Number.isFinite(n) ? n : 0
 }
 
+// Summing decimal inputs leaves float noise (124.20000000000002); one decimal
+// place is also all the precision these values are ever entered with.
+export function roundAmount(value: number): number {
+  return Math.round(value * 10) / 10
+}
+
+export function formatAmount(value: number): string {
+  return String(roundAmount(value))
+}
+
 export function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 }
@@ -23,15 +33,21 @@ export function formatItemsAsText(items: FoodItem[]): string {
     totalCalories += totals.calories
 
     lines.push(`${index + 1}. ${item.name}`)
-    lines.push(`   重量 ${totals.weight}g / 蛋白質 ${totals.protein}g / 熱量 ${totals.calories}kcal`)
+    lines.push(
+      `   重量 ${formatAmount(totals.weight)}g / 蛋白質 ${formatAmount(totals.protein)}g / 熱量 ${formatAmount(totals.calories)}kcal`,
+    )
     for (const sub of item.subItems ?? []) {
-      lines.push(`   - ${sub.name}：重量 ${sub.weight}g / 蛋白質 ${sub.protein}g / 熱量 ${sub.calories}kcal`)
+      lines.push(
+        `   - ${sub.name}：重量 ${formatAmount(sub.weight)}g / 蛋白質 ${formatAmount(sub.protein)}g / 熱量 ${formatAmount(sub.calories)}kcal`,
+      )
     }
   })
 
   if (items.length > 1) {
     lines.push('')
-    lines.push(`總計：重量 ${totalWeight}g / 蛋白質 ${totalProtein}g / 熱量 ${totalCalories}kcal`)
+    lines.push(
+      `總計：重量 ${formatAmount(totalWeight)}g / 蛋白質 ${formatAmount(totalProtein)}g / 熱量 ${formatAmount(totalCalories)}kcal`,
+    )
   }
 
   return lines.join('\n')
