@@ -571,6 +571,7 @@ body { background: var(--bg); }
   position: absolute; inset: 0;
   border: 2px solid var(--accent);
   opacity: 0;
+  pointer-events: none;
   animation: photo-charge-ring 450ms ease forwards;
 }
 @keyframes photo-charge {
