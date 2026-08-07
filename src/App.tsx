@@ -551,7 +551,6 @@ function FoodBook({
         <div className="page-content">
           <header className="page-topbar">
             <div>
-              <div className="eyebrow">食物資料庫</div>
               <div className="title-row">
                 <h1>Foodbook</h1>
                 <span className="item-count">{items.length} 項</span>
