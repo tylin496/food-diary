@@ -504,7 +504,10 @@ body { background: var(--color-bg); }
   100% { opacity: 1; transform: scale(1) rotate(0); }
 }
 .food-card .card-actions {
-  position: absolute; top: 6px; right: 6px;
+  /* Offset matches the button's ::before inset below, so the enlarged tap
+     target lands flush with .photo's edge instead of being cut off by its
+     overflow: hidden. */
+  position: absolute; top: 9px; right: 9px;
   display: flex; flex-direction: column; gap: 4px;
 }
 .food-card .card-actions button {
