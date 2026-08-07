@@ -508,10 +508,19 @@ body { background: var(--color-bg); }
   display: flex; flex-direction: column; gap: 4px;
 }
 .food-card .card-actions button {
+  position: relative;
   width: 26px; height: 26px; padding: 0;
   display: flex; align-items: center; justify-content: center;
   background: color-mix(in srgb, var(--color-bg) 70%, transparent);
   border: none; cursor: pointer; color: var(--color-text);
+}
+.food-card .card-actions button::before {
+  /* Enlarges the tap target to ~44px without growing the visible button,
+     since it sits flush against the photo and mis-taps were falling
+     through to the card's own click (selecting it) instead of the button. */
+  content: '';
+  position: absolute;
+  inset: -9px;
 }
 .food-card .card-actions button:hover {
   background: var(--color-bg);
