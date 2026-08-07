@@ -793,6 +793,7 @@ body { background: var(--bg); }
    same LiftOS language as the reskinned card/topbar above. — */
 .dialog {
   width: min(440px, 100%); gap: 16px; padding: 18px;
+  max-height: calc(100vh - var(--space-4) * 2); overflow-y: auto;
   border-radius: var(--radius-card);
   background: var(--bg-card);
   /* --bg-card is translucent in dark mode (for the frosted food-card look),
