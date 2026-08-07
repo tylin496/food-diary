@@ -142,6 +142,7 @@ export function FoodModal({
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => {
           if (e.key !== 'Enter') return
+          if (e.nativeEvent.isComposing) return
           const target = e.target as HTMLElement
           if (target.tagName === 'TEXTAREA') return
           e.preventDefault()
