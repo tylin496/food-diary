@@ -604,9 +604,9 @@ body { background: var(--bg); }
   100% { opacity: 1; transform: scale(1); }
 }
 .food-card .card-actions {
-  /* Offset matches the button's ::before inset below, so the enlarged tap
-     target lands flush with .photo's edge instead of being cut off by its
-     overflow: hidden. */
+  /* Offset must match the button's ::before inset below (both 8px), so the
+     enlarged tap target lands flush with .photo's edge instead of being cut
+     off by its overflow: hidden — see 6388d54. */
   position: absolute; top: 8px; right: 8px;
   display: flex; flex-direction: column; gap: 4px;
 }
@@ -622,12 +622,13 @@ body { background: var(--bg); }
   border: none; cursor: pointer; color: var(--ink-2);
 }
 .food-card .card-actions button::before {
-  /* Enlarges the tap target to ~44px without growing the visible button,
-     since it sits flush against the photo and mis-taps were falling
+  /* Enlarges the tap target to ~42px without growing the visible button.
+     Must match .card-actions's 8px offset exactly, or the excess gets
+     clipped by .photo/.food-card's overflow: hidden and mis-taps fall
      through to the card's own click (selecting it) instead of the button. */
   content: '';
   position: absolute;
-  inset: -9px;
+  inset: -8px;
 }
 .food-card .food-name {
   font-family: var(--font-ui); font-weight: 700; font-size: 15px;
