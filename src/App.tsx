@@ -568,7 +568,9 @@ function FoodBook({
                     type="button"
                     className="avatar-btn"
                     title={`登出 ${userLabel}`}
-                    onClick={onLogOut}
+                    onClick={() => {
+                      if (window.confirm(`確定要登出 ${userLabel} 嗎？`)) onLogOut()
+                    }}
                   >
                     {photoURL ? (
                       <img src={photoURL} alt="" />
