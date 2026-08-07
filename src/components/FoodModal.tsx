@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Camera, Check, ChevronDown, ChevronUp, Plus, X } from 'lucide-react'
+import { Camera, Check, GripVertical, Plus, X } from 'lucide-react'
 import type { FoodDraft, FoodSubItemDraft } from '../types'
 import { uploadToCloudinary } from '../cloudinary'
 import { useDialogDismiss } from '../useDialogDismiss'
@@ -105,14 +105,41 @@ export function FoodModal({
     onChange({ ...draft, subItems: draft.subItems.filter((sub) => sub.id !== id) })
   }
 
-  const moveSubItem = (id: string, direction: -1 | 1) => {
-    const index = draft.subItems.findIndex((sub) => sub.id === id)
-    const targetIndex = index + direction
-    if (index === -1 || targetIndex < 0 || targetIndex >= draft.subItems.length) return
-    const next = [...draft.subItems]
-    const [moved] = next.splice(index, 1)
-    next.splice(targetIndex, 0, moved)
-    onChange({ ...draft, subItems: next })
+  const subItemsRef = useRef<HTMLDivElement>(null)
+  const dragIdRef = useRef<string | null>(null)
+  const [draggingSubItemId, setDraggingSubItemId] = useState<string | null>(null)
+
+  const handleSubItemGripDown = (e: React.PointerEvent<HTMLButtonElement>, id: string) => {
+    e.preventDefault()
+    e.currentTarget.setPointerCapture(e.pointerId)
+    dragIdRef.current = id
+    setDraggingSubItemId(id)
+  }
+
+  const handleSubItemGripMove = (e: React.PointerEvent<HTMLButtonElement>) => {
+    const draggedId = dragIdRef.current
+    if (!draggedId || !subItemsRef.current) return
+    const draggedIndex = draft.subItems.findIndex((sub) => sub.id === draggedId)
+    if (draggedIndex === -1) return
+    const rows = Array.from(subItemsRef.current.querySelectorAll<HTMLElement>('.sub-item-row'))
+    for (let i = 0; i < rows.length; i++) {
+      if (i === draggedIndex) continue
+      const rect = rows[i].getBoundingClientRect()
+      const mid = rect.top + rect.height / 2
+      const crossed = (i < draggedIndex && e.clientY < mid) || (i > draggedIndex && e.clientY > mid)
+      if (crossed) {
+        const next = [...draft.subItems]
+        const [moved] = next.splice(draggedIndex, 1)
+        next.splice(i, 0, moved)
+        onChange({ ...draft, subItems: next })
+        break
+      }
+    }
+  }
+
+  const handleSubItemGripUp = () => {
+    dragIdRef.current = null
+    setDraggingSubItemId(null)
   }
 
   const hasSubItems = draft.subItems.length > 0
@@ -267,30 +294,24 @@ export function FoodModal({
           )}
 
           {draft.subItems.length > 0 && (
-            <div className="sub-items">
-              {draft.subItems.map((sub, index) => (
-                <div className={`sub-item-row${sub.selected ? '' : ' is-excluded'}`} key={sub.id}>
+            <div className="sub-items" ref={subItemsRef}>
+              {draft.subItems.map((sub) => (
+                <div
+                  className={`sub-item-row${sub.selected ? '' : ' is-excluded'}${sub.id === draggingSubItemId ? ' is-dragging' : ''}`}
+                  key={sub.id}
+                >
                   <div className="sub-item-row-top">
-                    <div className="sub-item-move">
-                      <button
-                        type="button"
-                        className="sub-item-move-btn"
-                        aria-label="上移子項目"
-                        disabled={index === 0}
-                        onClick={() => moveSubItem(sub.id, -1)}
-                      >
-                        <ChevronUp size={12} />
-                      </button>
-                      <button
-                        type="button"
-                        className="sub-item-move-btn"
-                        aria-label="下移子項目"
-                        disabled={index === draft.subItems.length - 1}
-                        onClick={() => moveSubItem(sub.id, 1)}
-                      >
-                        <ChevronDown size={12} />
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      className="sub-item-grip"
+                      aria-label="拖曳排序子項目"
+                      onPointerDown={(e) => handleSubItemGripDown(e, sub.id)}
+                      onPointerMove={handleSubItemGripMove}
+                      onPointerUp={handleSubItemGripUp}
+                      onPointerCancel={handleSubItemGripUp}
+                    >
+                      <GripVertical size={14} />
+                    </button>
                     <input
                       type="checkbox"
                       className="sub-item-checkbox"
