@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Camera, Check, Plus, X } from 'lucide-react'
+import { Camera, Check, ChevronDown, ChevronUp, Plus, X } from 'lucide-react'
 import type { FoodDraft, FoodSubItemDraft } from '../types'
 import { uploadToCloudinary } from '../cloudinary'
 import { useDialogDismiss } from '../useDialogDismiss'
@@ -103,6 +103,16 @@ export function FoodModal({
 
   const removeSubItem = (id: string) => {
     onChange({ ...draft, subItems: draft.subItems.filter((sub) => sub.id !== id) })
+  }
+
+  const moveSubItem = (id: string, direction: -1 | 1) => {
+    const index = draft.subItems.findIndex((sub) => sub.id === id)
+    const targetIndex = index + direction
+    if (index === -1 || targetIndex < 0 || targetIndex >= draft.subItems.length) return
+    const next = [...draft.subItems]
+    const [moved] = next.splice(index, 1)
+    next.splice(targetIndex, 0, moved)
+    onChange({ ...draft, subItems: next })
   }
 
   const hasSubItems = draft.subItems.length > 0
@@ -258,9 +268,29 @@ export function FoodModal({
 
           {draft.subItems.length > 0 && (
             <div className="sub-items">
-              {draft.subItems.map((sub) => (
+              {draft.subItems.map((sub, index) => (
                 <div className={`sub-item-row${sub.selected ? '' : ' is-excluded'}`} key={sub.id}>
                   <div className="sub-item-row-top">
+                    <div className="sub-item-move">
+                      <button
+                        type="button"
+                        className="sub-item-move-btn"
+                        aria-label="上移子項目"
+                        disabled={index === 0}
+                        onClick={() => moveSubItem(sub.id, -1)}
+                      >
+                        <ChevronUp size={12} />
+                      </button>
+                      <button
+                        type="button"
+                        className="sub-item-move-btn"
+                        aria-label="下移子項目"
+                        disabled={index === draft.subItems.length - 1}
+                        onClick={() => moveSubItem(sub.id, 1)}
+                      >
+                        <ChevronDown size={12} />
+                      </button>
+                    </div>
                     <input
                       type="checkbox"
                       className="sub-item-checkbox"

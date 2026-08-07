@@ -937,6 +937,15 @@ body { background: var(--bg); }
 .sub-item-row-top { display: flex; gap: 6px; align-items: center; }
 .sub-item-row-top .input { flex: 1; }
 .sub-item-checkbox { flex: none; width: 16px; height: 16px; cursor: pointer; accent-color: var(--color-accent); }
+.sub-item-move { flex: none; display: flex; flex-direction: column; }
+.sub-item-move-btn {
+  width: 18px; height: 15px; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: transparent; border: none;
+  color: color-mix(in srgb, var(--color-text) 60%, transparent); cursor: pointer;
+}
+.sub-item-move-btn:hover:not(:disabled) { color: var(--color-accent); }
+.sub-item-move-btn:disabled { opacity: 0.25; cursor: default; }
 .sub-item-remove {
   flex: none; width: 30px; height: 30px; padding: 0;
   display: flex; align-items: center; justify-content: center;
