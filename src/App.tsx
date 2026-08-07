@@ -348,15 +348,22 @@ function FoodBook({
       if (!(e.metaKey || e.ctrlKey)) return
       const isSelectAll = e.key === 'a' || e.key === 'A'
       const isDeselect = e.key === 'd' || e.key === 'D'
-      if (!isSelectAll && !isDeselect) return
+      const isCopy = e.key === 'c' || e.key === 'C'
+      if (!isSelectAll && !isDeselect && !isCopy) return
       if (isEditable || modalOpen) return
+      if (isCopy) {
+        if (selectedItems.length === 0) return
+        e.preventDefault()
+        copySelectedAsText()
+        return
+      }
       e.preventDefault()
       if (isSelectAll) selectAll()
       else clearSelection()
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [filteredItems, modalOpen])
+  }, [filteredItems, modalOpen, selectedItems])
 
   const mergeIntoItem = (baseId: string, mergeIds: string[]) => {
     if (!isOwner || mergeIds.length === 0) return
