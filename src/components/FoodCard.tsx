@@ -39,6 +39,9 @@ export function FoodCard({
 }: FoodCardProps) {
   const totals = getFoodTotals(item)
   const subItems = item.subItems ?? []
+  // Without sub-items the weight itself labels the portion, so it becomes the
+  // lone chip instead of being repeated in the meta row.
+  const weightAsSubItem = subItems.length === 0 && item.weight > 0
 
   const longPressTimer = useRef<number | null>(null)
   const pointerStart = useRef<{ x: number; y: number } | null>(null)
@@ -148,6 +151,11 @@ export function FoodCard({
         )}
       </div>
       <div className="food-name">{item.name}</div>
+      {weightAsSubItem && (
+        <div className="sub-items-summary">
+          <span className="sub-item-chip">{item.weight} g</span>
+        </div>
+      )}
       {subItems.length > 0 && (
         <div className="sub-items-summary">
           {subItems.map((sub) => (
@@ -171,7 +179,7 @@ export function FoodCard({
       <div className="meta-row">
         <span className="stat-calories">{totals.calories} kcal</span>
         <span className="meta-secondary">
-          {totals.weight > 0 && `${totals.weight} g · `}
+          {!weightAsSubItem && totals.weight > 0 && `${totals.weight} g · `}
           {totals.protein} g 蛋白質
         </span>
       </div>
