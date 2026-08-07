@@ -221,30 +221,32 @@ export function FoodCard({
         )}
         {subItems.length > 0 && (
           <div className="sub-items-summary">
-            {subItems.map((sub) => (
-              <span
-                className={`sub-item-chip${sub.selected === false ? ' is-excluded' : ''}${readOnly ? '' : ' is-toggleable'}`}
-                key={sub.id}
-                onClick={
-                  readOnly
-                    ? undefined
-                    : (e) => {
-                        e.stopPropagation()
-                        onToggleSubItem(item.id, sub.id)
-                      }
-                }
-              >
-                {sub.name}
-              </span>
-            ))}
+            <span
+              className={`sub-item-chip${subItems[0].selected === false ? ' is-excluded' : ''}${readOnly ? '' : ' is-toggleable'}`}
+              onClick={
+                readOnly
+                  ? undefined
+                  : (e) => {
+                      e.stopPropagation()
+                      onToggleSubItem(item.id, subItems[0].id)
+                    }
+              }
+            >
+              {subItems[0].name}
+            </span>
+            {subItems.length > 1 && <span className="sub-item-chip is-more">+{subItems.length - 1}</span>}
           </div>
         )}
-        <div className="meta-row">
-          <span>
-            <span className="stat-calories">{formatAmount(totals.calories)}</span>
-            <span className="stat-calories-unit">kcal</span>
-          </span>
-          <span className="meta-secondary">蛋白 {formatAmount(totals.protein)} g</span>
+        <div className="stat-grid">
+          <div className="stat">
+            <div className="stat-value">{formatAmount(totals.calories)}</div>
+            <div className="stat-label">KCAL</div>
+          </div>
+          <div className="stat-rule" />
+          <div className="stat">
+            <div className="stat-value is-protein">{formatAmount(totals.protein)}</div>
+            <div className="stat-label">蛋白 G</div>
+          </div>
         </div>
       </div>
     </div>

@@ -358,23 +358,30 @@ textarea.input { min-height: 90px; resize: vertical; }
 
 /* — page topbar — */
 .page-topbar {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
   padding: 0 4px;
 }
 .page-topbar .eyebrow {
   font-size: 11px; font-weight: 700; letter-spacing: .06em; color: var(--ink-3);
 }
 .page-topbar .title-row {
-  display: flex; align-items: baseline; gap: 8px; margin-top: 2px;
+  display: flex; align-items: baseline; gap: 8px;
 }
 .page-topbar h1 {
-  font-family: var(--font-ui); font-size: 26px; font-weight: 700;
+  font-family: var(--font-ui); font-size: 22px; font-weight: 700;
   letter-spacing: -.02em; color: var(--ink); margin: 0;
 }
 .page-topbar .item-count { font-size: 13px; color: var(--ink-3); }
+.page-topbar .search-bar { flex: 1; margin-top: 0; }
+.page-topbar .kbd-hint {
+  font-family: var(--font-mono); font-size: 11px; color: var(--ink-4);
+  border: 1px solid var(--off-ring); border-radius: 5px; padding: 1px 6px;
+}
 .page-topbar .topbar-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-@media (max-width: 430px) {
-  .page-topbar h1 { font-size: 22px; }
+@media (max-width: 560px) {
+  .page-topbar { flex-wrap: wrap; }
+  .page-topbar .search-bar { flex-basis: 100%; order: 3; margin-top: 12px; }
+  .page-topbar .kbd-hint { display: none; }
 }
 
 .btn-add-pill {
@@ -552,6 +559,13 @@ body { background: var(--bg); }
   -webkit-touch-callout: none;
   user-select: none;
 }
+.food-card .photo::before {
+  /* Lets the white-packaging photos' pencil/check controls stay legible. */
+  content: '';
+  position: absolute; inset: 0 0 auto 0; height: 52px;
+  background: linear-gradient(180deg, rgba(0,0,0,.4), transparent);
+  pointer-events: none; z-index: 1;
+}
 .food-card .photo img {
   width: 100%; height: 100%; object-fit: cover;
   filter: grayscale(1) contrast(1.08);
@@ -591,7 +605,7 @@ body { background: var(--bg); }
 }
 .food-card .photo .placeholder-icon { color: var(--ink-4); }
 .food-card .selected-badge {
-  position: absolute; top: 8px; left: 8px;
+  position: absolute; top: 8px; left: 8px; z-index: 2;
   width: 22px; height: 22px;
   background: var(--accent-strong); color: #fff;
   border-radius: 50%;
@@ -608,7 +622,7 @@ body { background: var(--bg); }
   /* Offset must match the button's ::before inset below (both 8px), so the
      enlarged tap target lands flush with .photo's edge instead of being cut
      off by its overflow: hidden — see 6388d54. */
-  position: absolute; top: 8px; right: 8px;
+  position: absolute; top: 8px; right: 8px; z-index: 2;
   display: flex; flex-direction: column; gap: 4px;
 }
 .food-card .card-actions button {
@@ -616,11 +630,11 @@ body { background: var(--bg); }
   width: 26px; height: 26px; padding: 0;
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  background: var(--glass-btn);
+  background: rgba(20, 20, 20, .5);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   box-shadow: inset 0 0 0 .5px var(--glass-edge);
-  border: none; cursor: pointer; color: var(--ink-2);
+  border: none; cursor: pointer; color: var(--ink);
 }
 .food-card .card-actions button::before {
   /* Enlarges the tap target to ~42px without growing the visible button.
@@ -638,45 +652,63 @@ body { background: var(--bg); }
   color: var(--ink);
 }
 .food-card .card-body {
-  display: flex; flex-direction: column; gap: 6px;
-  padding: 11px 13px 13px;
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 11px 13px 12px;
+  height: 132px;
+  box-sizing: border-box;
 }
-.food-card .meta-row {
-  display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
-  margin-top: 2px;
+@media (max-width: 430px) {
+  .food-card .card-body { height: 126px; padding: 10px 12px 11px; }
 }
-.food-card .stat-calories {
-  font-family: var(--font-mono); font-size: 20px; font-weight: 700;
-  line-height: 1.2; letter-spacing: -.02em; color: var(--ink);
+.food-card .stat-grid {
+  display: grid; grid-template-columns: 1fr 1px 1fr;
+  gap: 10px; align-items: center;
+  margin-top: auto;
+  padding-top: 9px; border-top: 1px solid var(--rule);
 }
-.food-card .stat-calories-unit {
-  font-family: var(--font-ui); font-size: 13px; font-weight: 500; color: var(--ink-3);
-  margin-left: 4px;
+.food-card .stat-value {
+  font-family: var(--font-mono); font-size: 22px; font-weight: 700;
+  line-height: 1.1; letter-spacing: -.03em; color: var(--ink);
 }
-.food-card .meta-secondary {
-  font-family: var(--font-ui); font-size: 13px; color: var(--ink-3);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+.food-card .stat-value.is-protein { color: var(--chip-ink); }
+.food-card .stat-label {
+  font-size: 10px; font-weight: 600; letter-spacing: .07em;
+  color: var(--ink-4); margin-top: 3px;
+}
+.food-card .stat-rule { width: 1px; height: 30px; background: var(--rule); }
+@media (max-width: 430px) {
+  .food-card .stat-grid { gap: 8px; padding-top: 8px; }
+  .food-card .stat-value { font-size: 20px; }
+  .food-card .stat-rule { height: 28px; }
 }
 .food-card .sub-items-summary {
-  display: flex; flex-wrap: wrap; gap: 4px;
+  display: flex; gap: 4px; min-height: 19px; overflow: hidden;
 }
 .food-card .sub-item-chip {
+  flex: 0 1 auto; min-width: 0;
   display: inline-flex; align-items: center;
-  font-family: var(--font-ui); font-size: 11px; font-weight: 600; line-height: 1.45;
-  color: var(--chip-ink);
-  background: var(--chip-bg);
-  box-shadow: inset 0 0 0 1px var(--chip-ring);
+  font-family: var(--font-ui); font-size: 11px; font-weight: 500; line-height: 19px;
+  color: var(--ink-2);
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+  box-shadow: none;
   border-radius: var(--radius-pill);
-  padding: 2px 8px;
+  padding: 0 8px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   transition: background 120ms var(--ease-press);
 }
 .food-card .sub-item-chip.is-excluded {
   color: var(--ink-4);
   background: transparent;
   box-shadow: inset 0 0 0 1px var(--off-ring);
+  text-decoration: line-through;
 }
 .food-card .sub-item-chip.is-toggleable {
   cursor: pointer;
+}
+.food-card .sub-item-chip.is-more {
+  flex: none; color: var(--ink-4);
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+  padding: 0 7px; cursor: default;
 }
 
 /* — floating selection summary bar — Liquid Glass capsule — */
@@ -751,26 +783,59 @@ body { background: var(--bg); }
   100% { transform: scale(1); }
 }
 
+/* — dialog reskin — brings the add/edit dialog and sub-item picker onto the
+   same LiftOS language as the reskinned card/topbar above. — */
+.dialog {
+  width: min(440px, 100%); gap: 16px; padding: 18px;
+  border-radius: var(--radius-card);
+  background: var(--bg-card);
+  border: 1px solid var(--rule);
+  font-family: var(--font-ui);
+}
+.dialog-title { font-family: var(--font-ui); font-weight: 700; font-size: 17px; }
+
+.input {
+  min-height: 46px; padding: 0 14px; font-size: 17px;
+  background: var(--bg-soft); border: none; border-radius: var(--radius-sm);
+}
+.input:focus-visible { box-shadow: inset 0 0 0 1px var(--accent); }
+.number-fields .input {
+  font-family: var(--font-mono); font-size: 19px; font-weight: 700; letter-spacing: -.02em;
+}
+.number-fields .input#food-protein { color: var(--chip-ink); }
+
+.btn {
+  font-family: var(--font-ui); font-weight: 600; font-size: 14px;
+  height: 38px; padding: 0 16px; border-radius: var(--radius-pill);
+}
+.btn-primary { background: var(--accent-strong); color: #fff; }
+.btn-secondary { border: none; box-shadow: inset 0 0 0 1px var(--off-ring); color: var(--ink-2); }
+
+.btn-add-subitem-row {
+  display: flex; align-items: center; gap: 6px; width: 100%;
+  height: 40px; padding: 0 12px;
+  background: var(--bg-soft); border: none; border-radius: var(--radius-sm);
+  color: var(--ink-3); font-family: var(--font-ui); font-size: 13px; font-weight: 600;
+  cursor: pointer;
+}
+
 /* — modal form — */
-.modal-photo-row {
-  display: flex; gap: var(--space-3); align-items: flex-start;
+.photo-upload-row {
+  display: flex; align-items: center; gap: 10px;
+  height: 52px; padding: 0 12px;
+  background: var(--bg-soft); border-radius: var(--radius-sm);
+  cursor: pointer;
 }
-.photo-upload-box {
-  width: 120px; height: 120px; flex: none;
-  border: 1px dashed var(--color-divider);
+.photo-upload-thumb {
+  width: 34px; height: 34px; flex: none; border-radius: 8px; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
   background: var(--color-surface);
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 6px; cursor: pointer; overflow: hidden;
   color: color-mix(in srgb, var(--color-text) 55%, transparent);
-  font-size: 11px; text-align: center; padding: var(--space-1);
 }
-.photo-upload-box img {
-  width: 100%; height: 100%; object-fit: cover;
-}
-.modal-photo-row .field { flex: 1; }
+.photo-upload-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.photo-upload-label { font-size: 13px; color: var(--ink-2); }
 .number-fields {
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3);
-  margin-top: var(--space-3);
+  display: grid; grid-template-columns: 1.15fr 1.15fr .9fr; gap: var(--space-3);
 }
 .dialog-actions.space-between { justify-content: space-between; }
 .btn-delete-text {
@@ -808,8 +873,9 @@ body { background: var(--bg); }
 .picker-row {
   display: flex; align-items: center; gap: 10px; width: 100%;
   padding: 10px var(--space-2);
-  background: var(--color-bg); color: var(--color-text);
-  border: 1px solid var(--color-divider);
+  background: var(--bg-soft); color: var(--color-text);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
   text-align: left; cursor: pointer;
   transition: background-color 150ms ease, border-color 150ms ease;
 }
@@ -822,6 +888,7 @@ body { background: var(--bg); }
   display: inline-flex; align-items: center; justify-content: center;
   flex: none; width: 18px; height: 18px;
   border: 1px solid var(--color-divider);
+  border-radius: var(--radius-sm);
   color: var(--color-bg);
 }
 .picker-row.is-chosen .picker-check {

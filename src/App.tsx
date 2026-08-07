@@ -68,6 +68,7 @@ function FoodBook({
   const [pickerItemId, setPickerItemId] = useState<string | null>(null)
 
   const foodGridRef = useRef<HTMLDivElement>(null)
+  const searchInputRef = useRef<HTMLInputElement>(null)
   const prevRectsRef = useRef<Record<string, DOMRect> | null>(null)
   const dragMetaRef = useRef<{ id: string; grabOffsetX: number; grabOffsetY: number } | null>(null)
   const lastPointerRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
@@ -331,16 +332,23 @@ function FoodBook({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!(e.metaKey || e.ctrlKey)) return
-      const isSelectAll = e.key === 'a' || e.key === 'A'
-      const isDeselect = e.key === 'd' || e.key === 'D'
-      if (!isSelectAll && !isDeselect) return
       const target = e.target as HTMLElement | null
       const isEditable =
         target &&
         (target.tagName === 'INPUT' ||
           target.tagName === 'TEXTAREA' ||
           target.isContentEditable)
+
+      if (e.key === '/' && !isEditable && !(e.metaKey || e.ctrlKey)) {
+        e.preventDefault()
+        searchInputRef.current?.focus()
+        return
+      }
+
+      if (!(e.metaKey || e.ctrlKey)) return
+      const isSelectAll = e.key === 'a' || e.key === 'A'
+      const isDeselect = e.key === 'd' || e.key === 'D'
+      if (!isSelectAll && !isDeselect) return
       if (isEditable || modalOpen) return
       e.preventDefault()
       if (isSelectAll) selectAll()
@@ -550,12 +558,25 @@ function FoodBook({
       <div className="page-scroll">
         <div className="page-content">
           <header className="page-topbar">
-            <div>
-              <div className="title-row">
-                <h1>Foodbook</h1>
-                <span className="item-count">{items.length} 項</span>
-              </div>
+            <div className="title-row">
+              <h1>Foodbook</h1>
+              <span className="item-count">{items.length}</span>
             </div>
+
+            <div className="search-bar">
+              <Search size={16} strokeWidth={2} />
+              <input
+                ref={searchInputRef}
+                value={search}
+                onChange={(e) => {
+                  captureRects()
+                  setSearch(e.target.value)
+                }}
+                placeholder="搜尋食物名稱"
+              />
+              <span className="kbd-hint">/</span>
+            </div>
+
             <div className="topbar-actions">
               {isOwner ? (
                 <>
@@ -585,18 +606,6 @@ function FoodBook({
               )}
             </div>
           </header>
-
-          <div className="search-bar">
-            <Search size={16} strokeWidth={2} />
-            <input
-              value={search}
-              onChange={(e) => {
-                captureRects()
-                setSearch(e.target.value)
-              }}
-              placeholder="搜尋食物名稱"
-            />
-          </div>
 
           {itemsLoading && !hasAnyItems && <div className="no-results">同步中…</div>}
           {!itemsLoading && !hasAnyItems && (

@@ -156,56 +156,19 @@ export function FoodModal({
           </button>
         </div>
 
-        <div className="modal-photo-row">
-          <div className="photo-upload-box" onClick={() => fileInputRef.current?.click()}>
-            {preview ? (
-              <img src={preview} alt="食物照片預覽" />
-            ) : (
-              <>
-                <Camera size={22} />
-                <span>上傳照片</span>
-              </>
-            )}
-            {uploading && <span>上傳中…</span>}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              style={{ display: 'none' }}
-              onChange={handleFileChange}
-            />
-          </div>
-          <div className="field">
-            {uploadError && (
-              <div style={{ color: 'var(--color-accent)', fontSize: 12, marginBottom: 6 }}>
-                照片上傳失敗，請重試
-              </div>
-            )}
-            <label htmlFor="food-name">食物名稱</label>
-            <input
-              id="food-name"
-              className="input"
-              value={draft.name}
-              onChange={(e) => onChange({ ...draft, name: e.target.value })}
-              placeholder="例如：雞胸肉"
-            />
-          </div>
+        <div className="field">
+          <label htmlFor="food-name">食物名稱</label>
+          <input
+            id="food-name"
+            className="input"
+            autoFocus
+            value={draft.name}
+            onChange={(e) => onChange({ ...draft, name: e.target.value })}
+            placeholder="例如：雞胸肉"
+          />
         </div>
 
         <div className="number-fields">
-          <div className="field">
-            <label htmlFor="food-weight">重量 (g){hasSubItems && '・自動加總'}</label>
-            <input
-              id="food-weight"
-              className="input"
-              type="number"
-              inputMode="decimal"
-              value={hasSubItems ? totalWeight : draft.weight}
-              disabled={hasSubItems}
-              onChange={(e) => onChange({ ...draft, weight: e.target.value })}
-              placeholder="0"
-            />
-          </div>
           <div className="field">
             <label htmlFor="food-calories">熱量 (kcal){hasSubItems && '・自動加總'}</label>
             <input
@@ -232,7 +195,41 @@ export function FoodModal({
               placeholder="0"
             />
           </div>
+          <div className="field">
+            <label htmlFor="food-weight">重量 (g){hasSubItems && '・自動加總'}</label>
+            <input
+              id="food-weight"
+              className="input"
+              type="number"
+              inputMode="decimal"
+              value={hasSubItems ? totalWeight : draft.weight}
+              disabled={hasSubItems}
+              onChange={(e) => onChange({ ...draft, weight: e.target.value })}
+              placeholder="0"
+            />
+          </div>
         </div>
+
+        <div className="photo-upload-row" onClick={() => fileInputRef.current?.click()}>
+          <div className="photo-upload-thumb">
+            {preview ? <img src={preview} alt="食物照片預覽" /> : <Camera size={18} strokeWidth={1.8} />}
+          </div>
+          <span className="photo-upload-label">
+            {uploading ? '上傳中…' : preview ? '更換照片' : '加一張照片・選填'}
+          </span>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            style={{ display: 'none' }}
+            onChange={handleFileChange}
+          />
+        </div>
+        {uploadError && (
+          <div style={{ color: 'var(--color-accent)', fontSize: 12, marginTop: -8 }}>
+            照片上傳失敗，請重試
+          </div>
+        )}
 
         {isEditing && mergeCandidateCount > 0 && (
           <div className="merge-hint">
@@ -244,13 +241,20 @@ export function FoodModal({
         )}
 
         <div className="sub-items-section">
-          <div className="sub-items-header">
-            <span>子項目・勾選要計入加總的項目</span>
-            <button type="button" className="btn-ghost btn-add-subitem" onClick={addSubItem}>
+          {hasSubItems ? (
+            <div className="sub-items-header">
+              <span>子項目・勾選要計入加總的項目</span>
+              <button type="button" className="btn-ghost btn-add-subitem" onClick={addSubItem}>
+                <Plus size={14} />
+                新增子項目
+              </button>
+            </div>
+          ) : (
+            <button type="button" className="btn-add-subitem-row" onClick={addSubItem}>
               <Plus size={14} />
               新增子項目
             </button>
-          </div>
+          )}
 
           {draft.subItems.length > 0 && (
             <div className="sub-items">
