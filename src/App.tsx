@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { Image as ImageIcon, LogOut, Plus, Search } from 'lucide-react'
+import { Image as ImageIcon, Plus, Search } from 'lucide-react'
 import { useAuth } from './useAuth'
 import { useTheme } from './useTheme'
 import { useCloudItems } from './useCloudItems'
@@ -25,6 +25,7 @@ export default function App() {
     <FoodBook
       isOwner={isOwner}
       userLabel={user?.displayName ?? user?.email ?? ''}
+      photoURL={user?.photoURL ?? null}
       onSignIn={signIn}
       onLogOut={logOut}
     />
@@ -34,11 +35,13 @@ export default function App() {
 function FoodBook({
   isOwner,
   userLabel,
+  photoURL,
   onSignIn,
   onLogOut,
 }: {
   isOwner: boolean
   userLabel: string
+  photoURL: string | null
   onSignIn: () => void
   onLogOut: () => void
 }) {
@@ -61,26 +64,15 @@ function FoodBook({
   const reorderEnabled = isOwner && search.trim().length === 0
   const [draggingId, setDraggingId] = useState<string | null>(null)
   const [removingIds, setRemovingIds] = useState<Set<string>>(new Set())
-  const [justSelectedId, setJustSelectedId] = useState<string | null>(null)
   const [modalClosing, setModalClosing] = useState(false)
   const [pickerItemId, setPickerItemId] = useState<string | null>(null)
 
   const foodGridRef = useRef<HTMLDivElement>(null)
   const prevRectsRef = useRef<Record<string, DOMRect> | null>(null)
-  const mountDelaysRef = useRef<Map<string, number>>(new Map())
-  const mountDelaysCapturedRef = useRef(false)
   const dragMetaRef = useRef<{ id: string; grabOffsetX: number; grabOffsetY: number } | null>(null)
   const lastPointerRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
   const springOffsetRef = useRef<{ x: number; y: number } | null>(null)
   const dragRafRef = useRef<number | null>(null)
-  const selectPulseTimerRef = useRef<number | null>(null)
-
-  if (!mountDelaysCapturedRef.current && !itemsLoading) {
-    items.forEach((item, i) => {
-      if (!mountDelaysRef.current.has(item.id)) mountDelaysRef.current.set(item.id, i * 55)
-    })
-    mountDelaysCapturedRef.current = true
-  }
 
   const findCardEl = useCallback((id: string): HTMLElement | null => {
     const grid = foodGridRef.current
@@ -262,7 +254,6 @@ function FoodBook({
       window.removeEventListener('pointermove', handlePointerMove)
       window.removeEventListener('pointerup', handlePointerUp)
       stopSpringLoop()
-      if (selectPulseTimerRef.current !== null) window.clearTimeout(selectPulseTimerRef.current)
     }
   }, [handlePointerMove, handlePointerUp, stopSpringLoop])
 
@@ -322,18 +313,12 @@ function FoodBook({
   const pickerItem = pickerItemId === null ? null : (items.find((item) => item.id === pickerItemId) ?? null)
 
   const toggleSelect = (id: string) => {
-    const wasSelected = selectedIds.has(id)
     setSelectedIds((prev) => {
       const next = new Set(prev)
       if (next.has(id)) next.delete(id)
       else next.add(id)
       return next
     })
-    if (!wasSelected) {
-      setJustSelectedId(id)
-      if (selectPulseTimerRef.current !== null) window.clearTimeout(selectPulseTimerRef.current)
-      selectPulseTimerRef.current = window.setTimeout(() => setJustSelectedId(null), 600)
-    }
   }
 
   const clearSelection = () => setSelectedIds(new Set())
@@ -562,84 +547,97 @@ function FoodBook({
 
   return (
     <>
-      <nav className="nav">
-        <div className="nav-brand">Foodbook</div>
-        <div className="nav-search">
-          <Search size={18} />
-          <input
-            value={search}
-            onChange={(e) => {
-              captureRects()
-              setSearch(e.target.value)
-            }}
-            placeholder="搜尋食物名稱"
-          />
+      <div className="page-scroll">
+        <div className="page-content">
+          <header className="page-topbar">
+            <div>
+              <div className="eyebrow">食物資料庫</div>
+              <div className="title-row">
+                <h1>Foodbook</h1>
+                <span className="item-count">{items.length} 項</span>
+              </div>
+            </div>
+            <div className="topbar-actions">
+              {isOwner ? (
+                <>
+                  <button type="button" className="btn-add-pill" onClick={openAddModal}>
+                    <Plus size={15} strokeWidth={2.4} />
+                    新增
+                  </button>
+                  <button
+                    type="button"
+                    className="avatar-btn"
+                    title={`登出 ${userLabel}`}
+                    onClick={onLogOut}
+                  >
+                    {photoURL ? (
+                      <img src={photoURL} alt="" />
+                    ) : (
+                      (userLabel[0] ?? '?').toUpperCase()
+                    )}
+                  </button>
+                </>
+              ) : (
+                <button type="button" className="btn btn-secondary" onClick={onSignIn}>
+                  使用 Google 登入
+                </button>
+              )}
+            </div>
+          </header>
+
+          <div className="search-bar">
+            <Search size={16} strokeWidth={2} />
+            <input
+              value={search}
+              onChange={(e) => {
+                captureRects()
+                setSearch(e.target.value)
+              }}
+              placeholder="搜尋食物名稱"
+            />
+          </div>
+
+          {itemsLoading && !hasAnyItems && <div className="no-results">同步中…</div>}
+          {!itemsLoading && !hasAnyItems && (
+            <div className="empty-state">
+              <ImageIcon size={48} />
+              <h3>還沒有任何紀錄</h3>
+              <p className="text-muted">拍下食物照片，記錄重量、蛋白質與熱量，開始建立你的資料庫</p>
+              {isOwner && (
+                <button type="button" className="btn btn-primary" onClick={openAddModal}>
+                  <Plus size={16} />
+                  新增第一筆紀錄
+                </button>
+              )}
+            </div>
+          )}
+
+          {hasAnyItems && !hasResults && (
+            <div className="no-results">找不到符合「{search}」的紀錄</div>
+          )}
+
+          {hasAnyItems && hasResults && (
+            <div className="food-grid" ref={foodGridRef}>
+              {filteredItems.map((item) => (
+                <FoodCard
+                  key={item.id}
+                  item={item}
+                  selected={selectedIds.has(item.id)}
+                  grayscale={GRAYSCALE_PHOTOS}
+                  readOnly={!isOwner}
+                  reorderEnabled={reorderEnabled}
+                  dragging={draggingId === item.id}
+                  removing={removingIds.has(item.id)}
+                  onToggle={handleCardToggle}
+                  onEdit={openEditModal}
+                  onToggleSubItem={toggleSubItemSelected}
+                  onDragHandlePointerDown={handleDragHandlePointerDown}
+                />
+              ))}
+            </div>
+          )}
         </div>
-        {isOwner ? (
-          <>
-            <button type="button" className="btn btn-primary" onClick={openAddModal}>
-              <Plus size={16} />
-              新增食物
-            </button>
-            <button
-              type="button"
-              className="btn btn-secondary btn-icon"
-              title={`登出 ${userLabel}`}
-              onClick={onLogOut}
-            >
-              <LogOut size={16} />
-            </button>
-          </>
-        ) : (
-          <button type="button" className="btn btn-secondary" onClick={onSignIn}>
-            使用 Google 登入
-          </button>
-        )}
-      </nav>
-
-      <main className="main">
-        {itemsLoading && !hasAnyItems && <div className="no-results">同步中…</div>}
-        {!itemsLoading && !hasAnyItems && (
-          <div className="empty-state">
-            <ImageIcon size={48} />
-            <h3>還沒有任何紀錄</h3>
-            <p className="text-muted">拍下食物照片，記錄重量、蛋白質與熱量，開始建立你的資料庫</p>
-            {isOwner && (
-              <button type="button" className="btn btn-primary" onClick={openAddModal}>
-                <Plus size={16} />
-                新增第一筆紀錄
-              </button>
-            )}
-          </div>
-        )}
-
-        {hasAnyItems && !hasResults && (
-          <div className="no-results">找不到符合「{search}」的紀錄</div>
-        )}
-
-        {hasAnyItems && hasResults && (
-          <div className="food-grid" ref={foodGridRef}>
-            {filteredItems.map((item) => (
-              <FoodCard
-                key={item.id}
-                item={item}
-                selected={selectedIds.has(item.id)}
-                grayscale={GRAYSCALE_PHOTOS}
-                readOnly={!isOwner}
-                reorderEnabled={reorderEnabled}
-                dragging={draggingId === item.id}
-                mountDelay={mountDelaysRef.current.get(item.id) ?? 0}
-                removing={removingIds.has(item.id)}
-                justSelected={item.id === justSelectedId}
-                onToggle={handleCardToggle}
-                onEdit={openEditModal}
-                onToggleSubItem={toggleSubItemSelected}
-                onDragHandlePointerDown={handleDragHandlePointerDown}
-              />
-            ))}
-          </div>
-        )}
-      </main>
+      </div>
 
       <SelectionBar
         count={selectedItems.length}

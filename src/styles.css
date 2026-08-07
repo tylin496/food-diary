@@ -1,5 +1,55 @@
 /* Modernist — design-system tokens and component classes. This file is the source of truth for the system's look; retune it here and see readme.md. */
 @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&display=swap');
+
+:root {
+  /* LiftOS tokens — power the redesigned topbar/search/food-card/selection-bar
+     below (direction 1b: full-bleed photo, dark). The Modernist tokens further
+     down still drive the add/edit dialog and sub-item picker, which haven't
+     been reskinned yet. */
+  --bg: #f4f4f6;
+  --bg-card: #ffffff;
+  --bg-soft: #ebebf0;
+  --ink: #1d1d1f;
+  --ink-2: #3a3a3c;
+  --ink-3: #6e6e73;
+  --ink-4: #8e8e93;
+  --rule: rgba(60, 60, 67, .1);
+  --accent: #ec3013;
+  --accent-strong: #cf2a10;
+  --chip-bg: rgba(236, 48, 19, .10);
+  --chip-ink: #b8280f;
+  --chip-ring: rgba(236, 48, 19, .18);
+  --off-ring: rgba(60, 60, 67, .16);
+  --select-ring: rgba(236, 48, 19, .10);
+  --glass-bg: rgba(244, 244, 246, .62);
+  --glass-highlight: rgba(255, 255, 255, .72);
+  --glass-shadow: rgba(17, 24, 39, .16);
+  --glass-edge: rgba(255, 255, 255, .8);
+  --glass-btn: rgba(255, 255, 255, .68);
+  --page-bg: radial-gradient(circle at 50% -180px, rgba(236, 48, 19, .10), transparent 360px),
+    linear-gradient(180deg, #ffffff 0, #f4f4f6 320px), #f4f4f6;
+
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Noto Sans TC", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --radius-card: 14px;
+  --radius-sm: 10px;
+  --radius-pill: 999px;
+
+  --card-shadow: 0 1px 1px rgba(17, 24, 39, .04), 0 4px 10px -2px rgba(17, 24, 39, .05),
+    0 12px 28px -8px rgba(17, 24, 39, .07), 0 28px 60px -32px rgba(17, 24, 39, .09),
+    inset 0 1px 0 rgba(255, 255, 255, .92);
+
+  --dur-press: 120ms;
+  --dur-exit: 200ms;
+  --dur-enter: 400ms;
+  --dur-pop: 440ms;
+  --dur-countup: 600ms;
+  --ease-press: cubic-bezier(.2, .8, .2, 1);
+  --ease-enter: cubic-bezier(.16, 1, .3, 1);
+  --ease-pop: cubic-bezier(.34, 1.56, .64, 1);
+}
 
 :root {
   --color-bg: #f3f2f2;
@@ -67,13 +117,8 @@
   --motion-flip-bold: 420ms cubic-bezier(0.34, 1.61, 0.64, 1);
   --motion-pop-bold: cubic-bezier(0.34, 1.56, 0.64, 1);
   --motion-entrance-bold: cubic-bezier(0.22, 1, 0.36, 1);
-  --amp-pop-from: 0.3;
-  --amp-pop-peak: 1.3;
   --amp-dialog-offset: 30px;
   --amp-dialog-peak: 1.05;
-  --amp-bar-offset: 46px;
-  --amp-bar-peak: 1.06;
-  --amp-bump-peak: 1.24;
   --amp-check-peak: 1.38;
 }
 
@@ -81,6 +126,30 @@
    [data-theme="dark"] on <html>, set in useTheme.ts (defaults to the
    OS preference, overridable and persisted per-user). */
 :root[data-theme='dark'] {
+  --bg: #1a1a1a;
+  --bg-card: rgba(30, 30, 33, .86);
+  --bg-soft: #2c2c2e;
+  --ink: #f5f5f7;
+  --ink-2: #c7c7cc;
+  --ink-3: #98989d;
+  --ink-4: #8e8e93;
+  --rule: rgba(235, 235, 245, .14);
+  --accent: #ff6b4a;
+  --accent-strong: #e85f28;
+  --chip-bg: rgba(255, 107, 74, .18);
+  --chip-ink: #ffb49c;
+  --chip-ring: rgba(255, 107, 74, .26);
+  --off-ring: rgba(235, 235, 245, .18);
+  --select-ring: rgba(255, 107, 74, .16);
+  --glass-bg: rgba(26, 26, 26, .62);
+  --glass-highlight: rgba(255, 255, 255, .22);
+  --glass-shadow: rgba(0, 0, 0, .55);
+  --glass-edge: rgba(255, 255, 255, .24);
+  --glass-btn: rgba(60, 60, 63, .7);
+  --page-bg: radial-gradient(circle at 50% -200px, rgba(255, 107, 74, .14), transparent 380px), #1a1a1a;
+  --card-shadow: 0 1px 1px rgba(0, 0, 0, .4), 0 8px 22px -6px rgba(0, 0, 0, .42),
+    0 22px 50px -18px rgba(0, 0, 0, .5), inset 0 1px 0 rgba(255, 255, 255, .05);
+
   --color-bg: #1a1817;
   --color-surface: #242121;
   --color-text: #f3f1f0;
@@ -287,21 +356,54 @@ textarea.input { min-height: 90px; resize: vertical; }
 .tag-neutral { background: var(--color-neutral-100); color: var(--color-neutral-800); }
 .tag-outline { border: 1px solid var(--color-accent); color: var(--color-accent); }
 
-/* — navigation — */
-.nav {
-  display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4);
-  row-gap: var(--space-2);
-  padding: var(--space-3) var(--space-4);
-  border-bottom: 2px solid var(--color-divider);
+/* — page topbar — */
+.page-topbar {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 0 4px;
 }
-.nav-brand {
-  font-family: var(--font-heading); font-weight: var(--font-heading-weight);
-  font-size: 18px; margin-right: auto;
-  flex: none; white-space: nowrap;
+.page-topbar .eyebrow {
+  font-size: 11px; font-weight: 700; letter-spacing: .06em; color: var(--ink-3);
 }
-.nav a { color: inherit; text-decoration: none; font-size: 14px; }
-.nav a:hover, .nav a[aria-current='page'] { color: var(--color-accent); }
-.nav .btn { flex: none; white-space: nowrap; }
+.page-topbar .title-row {
+  display: flex; align-items: baseline; gap: 8px; margin-top: 2px;
+}
+.page-topbar h1 {
+  font-family: var(--font-ui); font-size: 26px; font-weight: 700;
+  letter-spacing: -.02em; color: var(--ink); margin: 0;
+}
+.page-topbar .item-count { font-size: 13px; color: var(--ink-3); }
+.page-topbar .topbar-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+@media (max-width: 430px) {
+  .page-topbar h1 { font-size: 22px; }
+}
+
+.btn-add-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 32px; padding: 0 14px 0 11px;
+  border: none; border-radius: var(--radius-pill); cursor: pointer;
+  font-family: var(--font-ui); font-size: 13px; font-weight: 600;
+  color: #fff; background: var(--accent-strong);
+  box-shadow: 0 1px 2px rgba(17, 24, 39, .14);
+}
+.avatar-btn {
+  width: 28px; height: 28px; flex-shrink: 0; border: none; padding: 0; cursor: pointer;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  background: var(--accent); color: #fff; font-weight: 700; font-size: 14px;
+  overflow: hidden; font-family: var(--font-ui);
+}
+.avatar-btn img { width: 100%; height: 100%; object-fit: cover; }
+
+/* — search bar — */
+.search-bar {
+  display: flex; align-items: center; gap: 8px; margin-top: 14px;
+  padding: 0 12px; height: 36px; border-radius: var(--radius-sm);
+  background: var(--bg-soft); color: var(--ink-3);
+}
+.search-bar svg { flex: none; }
+.search-bar input {
+  flex: 1; min-width: 0; border: 0; background: transparent; outline: none;
+  font-family: var(--font-ui); font-size: 15px; color: var(--ink);
+}
 
 /* — tables — */
 .table { width: 100%; border-collapse: collapse; font-size: 14px; }
@@ -364,30 +466,21 @@ textarea.input { min-height: 90px; resize: vertical; }
    ══════════════════════════════════════════════════════════════════════ */
 
 html, body, #root { height: 100%; }
-body { background: var(--color-bg); }
+body { background: var(--bg); }
 
-/* — nav search field — */
-.nav-search {
-  display: flex; align-items: center; gap: var(--space-2);
-  flex: 1; max-width: 320px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-divider);
-  padding: 6px 10px;
+/* — page scroller — */
+.page-scroll {
+  height: 100%; overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 28px 24px 104px;
+  background: var(--page-bg);
 }
-.nav-search svg { flex: none; opacity: 0.6; }
-.nav-search input {
-  flex: 1; border: 0; background: transparent; outline: none;
-  font: inherit; font-size: 14px; color: var(--color-text);
+.page-scroll::-webkit-scrollbar { display: none; }
+@media (max-width: 430px) {
+  .page-scroll { padding: 22px 14px 96px; }
 }
-@media (max-width: 640px) {
-  .nav-search { order: 1; flex-basis: 100%; max-width: none; }
-}
-
-/* — main content — */
-.main {
-  max-width: 1200px; margin: 0 auto;
-  padding: var(--space-6) var(--space-4);
-}
+.page-content { max-width: 1000px; margin: 0 auto; }
 
 /* — empty / no-results states — */
 .empty-state {
@@ -413,42 +506,47 @@ body { background: var(--color-bg); }
 .food-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-  gap: var(--space-4);
+  gap: 14px;
+  margin-top: 16px;
+}
+@media (max-width: 430px) {
+  .food-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 }
 
-/* — food card — */
+/* — food card — direction 1b: full-bleed photo, no inset padding */
 .food-card {
-  background: var(--color-surface);
-  padding: var(--space-2);
-  display: flex; flex-direction: column; gap: var(--space-2);
-  border: 2px solid transparent;
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-card);
+  padding: 0;
+  overflow: hidden;
+  display: flex; flex-direction: column;
   cursor: pointer;
   text-align: left;
   font: inherit;
   color: inherit;
-  transition: transform 180ms ease, box-shadow 180ms ease, border-color 150ms ease, opacity 180ms ease;
-  animation: card-in 520ms var(--motion-entrance-bold) both;
+  box-shadow: var(--card-shadow);
+  transition: box-shadow 200ms var(--ease-enter), transform 200ms var(--ease-enter);
+  animation: rise-in var(--dur-enter) var(--ease-enter) backwards;
 }
-.food-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
-.food-card:active { transform: translateY(-1px) scale(0.98); }
-.food-card.is-selected { border-color: var(--color-accent); }
+.food-card:hover { transform: translateY(-2px); }
+.food-card.is-selected {
+  box-shadow: 0 0 0 1.5px var(--accent), 0 0 0 5px var(--select-ring), var(--card-shadow);
+}
 .food-card.is-dragging { cursor: grabbing; }
 .food-card.is-removing {
   opacity: 0; transform: scale(0.8);
   transition: opacity 220ms ease, transform 220ms ease;
 }
-@keyframes card-in {
-  from { opacity: 0; transform: translateY(10px) scale(var(--amp-pop-from)) rotate(-3deg); }
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: none; }
-}
-@keyframes ring-pulse {
-  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-accent) 55%, transparent); }
-  100% { box-shadow: 0 0 0 12px transparent; }
 }
 .food-card .photo {
   position: relative;
   aspect-ratio: 1; overflow: hidden;
-  background: var(--color-neutral-200);
+  background: var(--bg-soft);
   display: flex; align-items: center; justify-content: center;
   touch-action: pan-y;
   -webkit-touch-callout: none;
@@ -471,7 +569,7 @@ body { background: var(--color-bg); }
 .food-card .photo.is-holding::after {
   content: '';
   position: absolute; inset: 0;
-  border: 2px solid var(--color-accent);
+  border: 2px solid var(--accent);
   opacity: 0;
   animation: photo-charge-ring 450ms ease forwards;
 }
@@ -490,32 +588,38 @@ body { background: var(--color-bg); }
   animation: none;
   opacity: 0;
 }
-.food-card .photo .placeholder-icon { color: var(--color-neutral-500); }
+.food-card .photo .placeholder-icon { color: var(--ink-4); }
 .food-card .selected-badge {
-  position: absolute; top: 6px; left: 6px;
-  width: 24px; height: 24px;
-  background: var(--color-accent); color: var(--color-bg);
+  position: absolute; top: 8px; left: 8px;
+  width: 22px; height: 22px;
+  background: var(--accent-strong); color: #fff;
+  border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  animation: badge-pop 320ms var(--motion-pop-bold);
+  box-shadow: 0 2px 6px rgba(17, 24, 39, .28);
+  animation: lo-pop var(--dur-pop) var(--ease-pop);
 }
-@keyframes badge-pop {
-  0% { opacity: 0; transform: scale(var(--amp-pop-from)) rotate(-12deg); }
-  60% { opacity: 1; transform: scale(var(--amp-pop-peak)) rotate(4deg); }
-  100% { opacity: 1; transform: scale(1) rotate(0); }
+@keyframes lo-pop {
+  0% { opacity: 0; transform: scale(.5); }
+  60% { opacity: 1; transform: scale(1.08); }
+  100% { opacity: 1; transform: scale(1); }
 }
 .food-card .card-actions {
   /* Offset matches the button's ::before inset below, so the enlarged tap
      target lands flush with .photo's edge instead of being cut off by its
      overflow: hidden. */
-  position: absolute; top: 9px; right: 9px;
+  position: absolute; top: 8px; right: 8px;
   display: flex; flex-direction: column; gap: 4px;
 }
 .food-card .card-actions button {
   position: relative;
   width: 26px; height: 26px; padding: 0;
+  border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  background: color-mix(in srgb, var(--color-bg) 70%, transparent);
-  border: none; cursor: pointer; color: var(--color-text);
+  background: var(--glass-btn);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: inset 0 0 0 .5px var(--glass-edge);
+  border: none; cursor: pointer; color: var(--ink-2);
 }
 .food-card .card-actions button::before {
   /* Enlarges the tap target to ~44px without growing the visible button,
@@ -525,117 +629,116 @@ body { background: var(--color-bg); }
   position: absolute;
   inset: -9px;
 }
-.food-card .card-actions button:hover {
-  background: var(--color-bg);
-}
 .food-card .food-name {
-  font-family: var(--font-heading); font-weight: 800; font-size: 15px;
+  font-family: var(--font-ui); font-weight: 700; font-size: 15px;
+  letter-spacing: -.01em;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  color: var(--ink);
+}
+.food-card .card-body {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 11px 13px 13px;
 }
 .food-card .meta-row {
-  display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px;
-  margin-top: auto; padding-top: 2px;
-  font-size: 12px;
+  display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+  margin-top: 2px;
 }
 .food-card .stat-calories {
-  font-family: var(--font-heading); font-weight: 800;
-  color: var(--color-accent);
+  font-family: var(--font-mono); font-size: 20px; font-weight: 700;
+  line-height: 1.2; letter-spacing: -.02em; color: var(--ink);
+}
+.food-card .stat-calories-unit {
+  font-family: var(--font-ui); font-size: 13px; font-weight: 500; color: var(--ink-3);
+  margin-left: 4px;
 }
 .food-card .meta-secondary {
+  font-family: var(--font-ui); font-size: 13px; color: var(--ink-3);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  color: color-mix(in srgb, var(--color-text) 55%, transparent);
 }
 .food-card .sub-items-summary {
   display: flex; flex-wrap: wrap; gap: 4px;
 }
 .food-card .sub-item-chip {
-  display: inline-flex; align-items: center; gap: 4px;
-  font-size: 11px;
-  color: var(--color-text);
-  background: color-mix(in srgb, var(--color-accent) 14%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-accent) 45%, transparent);
-  padding: 1px 6px;
-  transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease;
+  display: inline-flex; align-items: center;
+  font-family: var(--font-ui); font-size: 11px; font-weight: 600; line-height: 1.45;
+  color: var(--chip-ink);
+  background: var(--chip-bg);
+  box-shadow: inset 0 0 0 1px var(--chip-ring);
+  border-radius: var(--radius-pill);
+  padding: 2px 8px;
+  transition: background 120ms var(--ease-press);
 }
 .food-card .sub-item-chip.is-excluded {
-  color: color-mix(in srgb, var(--color-text) 45%, transparent);
+  color: var(--ink-4);
   background: transparent;
-  border-color: var(--color-divider);
+  box-shadow: inset 0 0 0 1px var(--off-ring);
 }
 .food-card .sub-item-chip.is-toggleable {
   cursor: pointer;
 }
-.food-card .sub-item-chip.is-toggleable:hover {
-  background: color-mix(in srgb, var(--color-accent) 24%, transparent);
-  border-color: color-mix(in srgb, var(--color-accent) 65%, transparent);
-}
-.food-card .sub-item-chip.is-excluded.is-toggleable:hover {
-  background: color-mix(in srgb, var(--color-text) 6%, transparent);
-  border-color: color-mix(in srgb, var(--color-text) 45%, transparent);
-}
 
-/* — floating selection summary bar — */
+/* — floating selection summary bar — Liquid Glass capsule — */
 .selection-bar {
-  position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 0);
+  position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%);
   z-index: 50;
-  background: var(--color-text); color: var(--color-bg);
-  padding: 14px 24px;
-  display: flex; align-items: center; gap: var(--space-6);
-  flex-wrap: wrap; justify-content: center;
-  box-shadow: var(--shadow-lg);
-  max-width: calc(100vw - 32px);
-  animation: bar-in 480ms var(--motion-entrance-bold);
+  width: min(calc(100% - 32px), 520px);
+  display: flex; align-items: center; flex-wrap: wrap; justify-content: center;
+  gap: 16px; padding: 9px 10px 9px 14px;
+  border-radius: var(--radius-pill);
+  background: var(--glass-bg);
+  backdrop-filter: saturate(200%) blur(22px);
+  -webkit-backdrop-filter: saturate(200%) blur(22px);
+  box-shadow:
+    inset 0 1px 0 var(--glass-highlight),
+    inset 0 0 0 .5px var(--glass-edge),
+    inset 0 -1px 2px var(--glass-shadow),
+    0 8px 28px -8px var(--glass-shadow),
+    0 0 0 .5px var(--glass-edge);
+  animation: rise-in var(--dur-enter) var(--ease-enter);
+}
+@media (max-width: 430px) {
+  .selection-bar { max-width: 340px; }
 }
 .selection-bar.is-leaving {
-  animation: bar-out 200ms ease forwards;
+  animation: glass-out var(--dur-exit) ease forwards;
 }
-@keyframes bar-in {
-  from { opacity: 0; transform: translate(-50%, var(--amp-bar-offset)) scale(0.9); }
-  55% { opacity: 1; transform: translate(-50%, -6px) scale(var(--amp-bar-peak)); }
-  100% { opacity: 1; transform: translate(-50%, 0) scale(1); }
-}
-@keyframes bar-out {
-  from { opacity: 1; transform: translate(-50%, 0); }
-  to { opacity: 0; transform: translate(-50%, 16px); }
+@keyframes glass-out {
+  from { opacity: 1; transform: translateX(-50%) translateY(0); }
+  to { opacity: 0; transform: translateX(-50%) translateY(6px); }
 }
 .selection-bar .selected-count {
-  font-family: var(--font-heading); font-weight: 800; font-size: 14px;
+  flex: none;
+  padding: 4px 10px; border-radius: var(--radius-pill);
+  background: var(--accent-strong); color: #fff;
+  font-family: var(--font-ui); font-size: 11px; font-weight: 700; line-height: 1.3;
   white-space: nowrap;
-  display: inline-block;
 }
-.selection-bar .selected-count.bump-a { animation: count-bump-a 320ms ease; }
-.selection-bar .selected-count.bump-b { animation: count-bump-b 320ms ease; }
-@keyframes count-bump-a {
-  0% { transform: scale(1); }
-  45% { transform: scale(var(--amp-bump-peak)); }
-  100% { transform: scale(1); }
+.selection-bar .stats { display: flex; align-items: flex-end; gap: 16px; }
+@media (max-width: 430px) {
+  .selection-bar .stats { gap: 12px; }
 }
-@keyframes count-bump-b {
-  0% { transform: scale(1); }
-  45% { transform: scale(var(--amp-bump-peak)); }
-  100% { transform: scale(1); }
-}
-.selection-bar .stats { display: flex; gap: var(--space-6); }
 .selection-bar .stat { text-align: center; }
 .selection-bar .stat .value {
-  font-family: var(--font-heading); font-weight: 800; font-size: 20px;
-  color: var(--color-accent-400);
-  line-height: 1.1;
+  font-family: var(--font-mono); font-size: 20px; font-weight: 700;
+  line-height: 1.15; letter-spacing: -.02em; color: var(--ink);
+}
+@media (max-width: 430px) {
+  .selection-bar .stat .value { font-size: 18px; }
 }
 .selection-bar .stat .label {
-  font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
-  opacity: 0.7; margin-top: 2px;
+  font-family: var(--font-ui); font-size: 11px; font-weight: 500;
+  letter-spacing: .04em; color: var(--ink-3); margin-top: 1px;
 }
-.selection-bar .btn-clear {
-  border: 1px solid color-mix(in srgb, var(--color-bg) 45%, transparent);
-  color: var(--color-bg);
-  background: transparent;
-  white-space: nowrap;
+.selection-bar .stat-rule { width: 1px; height: 22px; background: var(--rule); }
+.selection-bar .icon-actions { display: flex; align-items: center; gap: 2px; flex: none; }
+.selection-bar .icon-btn {
+  width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+  border: none; border-radius: var(--radius-pill);
+  background: transparent; color: var(--ink-3); cursor: pointer;
+  transition: background 120ms var(--ease-press), color 120ms var(--ease-press);
 }
-.selection-bar .btn-clear:hover {
-  background: color-mix(in srgb, var(--color-bg) 12%, transparent);
-}
-.selection-bar .btn-clear.is-copied { animation: pop 300ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+.selection-bar .icon-btn:hover { color: var(--ink); background: var(--bg-soft); }
+.selection-bar .icon-btn.is-copied { animation: pop 300ms var(--ease-pop); }
 @keyframes pop {
   0% { transform: scale(1); }
   40% { transform: scale(1.2); }

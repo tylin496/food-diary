@@ -14,9 +14,7 @@ interface FoodCardProps {
   readOnly: boolean
   reorderEnabled: boolean
   dragging: boolean
-  mountDelay: number
   removing: boolean
-  justSelected: boolean
   onToggle: (id: string) => void
   onEdit: (id: string) => void
   onToggleSubItem: (id: string, subId: string) => void
@@ -30,9 +28,7 @@ export function FoodCard({
   readOnly,
   reorderEnabled,
   dragging,
-  mountDelay,
   removing,
-  justSelected,
   onToggle,
   onEdit,
   onToggleSubItem,
@@ -81,17 +77,12 @@ export function FoodCard({
     }
   }
 
-  const animation = `card-in 520ms var(--motion-entrance-bold) ${mountDelay}ms both${
-    justSelected ? ', ring-pulse 550ms ease' : ''
-  }`
-
   return (
     <div
       role="button"
       tabIndex={0}
       data-food-id={item.id}
       className={`food-card${selected ? ' is-selected' : ''}${dragging ? ' is-dragging' : ''}${removing ? ' is-removing' : ''}`}
-      style={{ animation }}
       onClick={() => {
         if (longPressFired.current) {
           longPressFired.current = false
@@ -129,11 +120,11 @@ export function FoodCard({
             draggable={false}
           />
         ) : (
-          <Camera size={28} className="placeholder-icon" />
+          <Camera size={26} strokeWidth={1.8} className="placeholder-icon" />
         )}
         {selected && (
           <div className="selected-badge">
-            <Check size={14} strokeWidth={2.5} />
+            <Check size={13} strokeWidth={3} />
           </div>
         )}
         {!readOnly && (
@@ -146,43 +137,45 @@ export function FoodCard({
                 onEdit(item.id)
               }}
             >
-              <Pencil size={14} />
+              <Pencil size={13} />
             </button>
           </div>
         )}
       </div>
-      <div className="food-name">{item.name}</div>
-      {weightAsSubItem && (
-        <div className="sub-items-summary">
-          <span className="sub-item-chip">{formatAmount(item.weight)} g</span>
+      <div className="card-body">
+        <div className="food-name">{item.name}</div>
+        {weightAsSubItem && (
+          <div className="sub-items-summary">
+            <span className="sub-item-chip">{formatAmount(item.weight)} g</span>
+          </div>
+        )}
+        {subItems.length > 0 && (
+          <div className="sub-items-summary">
+            {subItems.map((sub) => (
+              <span
+                className={`sub-item-chip${sub.selected === false ? ' is-excluded' : ''}${readOnly ? '' : ' is-toggleable'}`}
+                key={sub.id}
+                onClick={
+                  readOnly
+                    ? undefined
+                    : (e) => {
+                        e.stopPropagation()
+                        onToggleSubItem(item.id, sub.id)
+                      }
+                }
+              >
+                {sub.name}
+              </span>
+            ))}
+          </div>
+        )}
+        <div className="meta-row">
+          <span>
+            <span className="stat-calories">{formatAmount(totals.calories)}</span>
+            <span className="stat-calories-unit">kcal</span>
+          </span>
+          <span className="meta-secondary">蛋白 {formatAmount(totals.protein)} g</span>
         </div>
-      )}
-      {subItems.length > 0 && (
-        <div className="sub-items-summary">
-          {subItems.map((sub) => (
-            <span
-              className={`sub-item-chip${sub.selected === false ? ' is-excluded' : ''}${readOnly ? '' : ' is-toggleable'}`}
-              key={sub.id}
-              onClick={
-                readOnly
-                  ? undefined
-                  : (e) => {
-                      e.stopPropagation()
-                      onToggleSubItem(item.id, sub.id)
-                    }
-              }
-            >
-              {sub.name}
-            </span>
-          ))}
-        </div>
-      )}
-      <div className="meta-row">
-        <span className="stat-calories">{formatAmount(totals.calories)} kcal</span>
-        <span className="meta-secondary">
-          {!weightAsSubItem && totals.weight > 0 && `${formatAmount(totals.weight)} g · `}
-          {formatAmount(totals.protein)} g 蛋白質
-        </span>
       </div>
     </div>
   )
