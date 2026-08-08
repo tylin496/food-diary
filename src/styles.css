@@ -643,11 +643,11 @@ body::before {
   width: 26px; height: 26px; padding: 0;
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  background: rgba(20, 20, 20, .5);
+  background: var(--glass-btn);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   box-shadow: inset 0 0 0 .5px var(--glass-edge);
-  border: none; cursor: pointer; color: var(--ink);
+  border: none; cursor: pointer; color: var(--ink-2);
 }
 .food-card .card-actions button::before {
   /* Enlarges the tap target to ~42px without growing the visible button.
