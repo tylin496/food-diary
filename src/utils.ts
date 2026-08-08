@@ -1,5 +1,5 @@
 import type { FoodItem, SubItemOverrides } from './types'
-import { getFoodTotals, getSubItemTotals, isSubItemSelected } from './types'
+import { getFoodTotals, getSubItemTotals } from './types'
 
 export function toNumber(value: string): number {
   const n = Number(value)
@@ -41,7 +41,6 @@ export function formatItemsAsText(
       `   重量 ${formatAmount(totals.weight)}g / 蛋白質 ${formatAmount(totals.protein)}g / 熱量 ${formatAmount(totals.calories)}kcal`,
     )
     for (const sub of item.subItems ?? []) {
-      if (!isSubItemSelected(sub, overrides)) continue
       const subTotals = getSubItemTotals(sub)
       lines.push(
         `   - ${sub.name}：重量 ${formatAmount(subTotals.weight)}g / 蛋白質 ${formatAmount(subTotals.protein)}g / 熱量 ${formatAmount(subTotals.calories)}kcal`,
