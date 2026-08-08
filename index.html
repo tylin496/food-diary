@@ -6,28 +6,12 @@
     <link rel="icon" type="image/png" sizes="192x192" href="%BASE_URL%icon-192.png" />
     <link rel="icon" type="image/png" sizes="512x512" href="%BASE_URL%icon-512.png" />
     <link rel="apple-touch-icon" href="%BASE_URL%icon-pwa.png" />
-    <link rel="manifest" href="%BASE_URL%site.webmanifest" />
-
-    <!-- viewport-fit=cover is required by the standalone install below: without
-         it env(safe-area-inset-*) reports 0 and content sits under the notch. -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-
-    <!-- Installed-PWA behaviour. `-capable` + display:standalone drops Safari's
-         chrome; black-translucent then lets the page draw under the status bar,
-         which .page-scroll pads for via env(safe-area-inset-top). -->
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <!-- Single theme-color meta (no media query) so useTheme.ts can keep it in
-         sync with the applied theme, not just the OS preference. Seeded below
-         for first paint, then owned by useTheme.ts. -->
-    <meta name="theme-color" content="#f4f4f6" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Foodbook</title>
     <script>
       (function () {
         var theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
         document.documentElement.dataset.theme = theme
-        var meta = document.querySelector('meta[name="theme-color"]')
-        if (meta) meta.setAttribute('content', theme === 'dark' ? '#1a1a1a' : '#f4f4f6')
       })()
     </script>
   </head>

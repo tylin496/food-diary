@@ -11,11 +11,6 @@ export function useTheme() {
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
-    // Keep the installed-PWA status bar in step with the applied theme. The meta
-    // is seeded in index.html for first paint; from here on this owns it. Values
-    // mirror --bg in :root / :root[data-theme='dark'].
-    const meta = document.querySelector('meta[name="theme-color"]')
-    if (meta) meta.setAttribute('content', theme === 'dark' ? '#1a1a1a' : '#f4f4f6')
   }, [theme])
 
   useEffect(() => {
