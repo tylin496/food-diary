@@ -402,14 +402,14 @@ textarea.input { min-height: 90px; resize: vertical; }
 
 /* — search bar — */
 .search-bar {
-  display: flex; align-items: center; gap: 8px; margin-top: 14px;
-  padding: 0 12px; height: 36px; border-radius: var(--radius-sm);
+  display: flex; align-items: center; gap: 6px; margin-top: 14px;
+  padding: 0 10px; height: 30px; border-radius: var(--radius-sm);
   background: var(--bg-soft); color: var(--ink-3);
 }
 .search-bar svg { flex: none; }
 .search-bar input {
   flex: 1; min-width: 0; border: 0; background: transparent; outline: none;
-  font-family: var(--font-ui); font-size: 15px; color: var(--ink);
+  font-family: var(--font-ui); font-size: 14px; color: var(--ink);
 }
 
 /* — tables — */

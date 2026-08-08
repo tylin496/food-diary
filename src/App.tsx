@@ -567,11 +567,11 @@ function FoodBook({
           <header className="page-topbar">
             <div className="title-row">
               <h1>Foodbook</h1>
-              <span className="item-count">{items.length}</span>
+              <span className="item-count">{items.length} 筆</span>
             </div>
 
             <div className="search-bar">
-              <Search size={16} strokeWidth={2} />
+              <Search size={14} strokeWidth={2} />
               <input
                 ref={searchInputRef}
                 value={search}
