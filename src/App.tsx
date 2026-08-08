@@ -388,7 +388,7 @@ function FoodBook({
           calories: item.calories,
           selected: true,
         },
-        ...(item.subItems ?? []),
+        ...(item.subItems ?? []).map((sub) => ({ ...sub, selected: true })),
       ]),
     ]
     const removeIds = new Set(mergeIds)
