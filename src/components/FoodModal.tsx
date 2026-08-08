@@ -38,10 +38,18 @@ export function FoodModal({
   const [uploadError, setUploadError] = useState(false)
   const [saveState, setSaveState] = useState<'idle' | 'success'>('idle')
   const saveTimerRef = useRef<number | null>(null)
+  const onSaveRef = useRef(onSave)
+  onSaveRef.current = onSave
 
   useEffect(() => {
     return () => {
-      if (saveTimerRef.current !== null) window.clearTimeout(saveTimerRef.current)
+      // If the modal gets dismissed another way (Escape, backdrop, X button)
+      // while the success checkmark is still playing, don't drop the save
+      // that already showed as "done" — flush it instead of cancelling it.
+      if (saveTimerRef.current !== null) {
+        window.clearTimeout(saveTimerRef.current)
+        onSaveRef.current()
+      }
     }
   }, [])
 
@@ -50,7 +58,10 @@ export function FoodModal({
   const handleSaveClick = () => {
     if (draft.name.trim().length === 0 || saveState === 'success') return
     setSaveState('success')
-    saveTimerRef.current = window.setTimeout(() => onSave(), 560)
+    saveTimerRef.current = window.setTimeout(() => {
+      saveTimerRef.current = null
+      onSaveRef.current()
+    }, 560)
   }
 
   const addSubItem = () => {
