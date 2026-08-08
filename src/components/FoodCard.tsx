@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { Camera, Check, Pencil } from 'lucide-react'
 import type { FoodItem } from '../types'
 import { getFoodTotals } from '../types'
@@ -58,6 +58,46 @@ export function FoodCard({
   const momentumFrame = useRef<number | null>(null)
   const lastPointerType = useRef<string>('mouse')
   const [holding, setHolding] = useState(false)
+
+  // Sub-item chips: show as many as actually fit before collapsing the rest
+  // into a "+N" chip, instead of always showing just the first one.
+  const chipsRef = useRef<HTMLDivElement | null>(null)
+  const chipMeasureRef = useRef<HTMLDivElement | null>(null)
+  const [visibleChipCount, setVisibleChipCount] = useState(subItems.length)
+
+  useLayoutEffect(() => {
+    if (subItems.length === 0) return
+    const container = chipsRef.current
+    const measure = chipMeasureRef.current
+    if (!container || !measure) return
+
+    const recompute = () => {
+      const available = container.clientWidth
+      const chipEls = Array.from(measure.querySelectorAll<HTMLElement>('[data-chip]'))
+      const moreEl = measure.querySelector<HTMLElement>('[data-more]')
+      const gap = 4
+      let used = 0
+      let count = 0
+      for (let i = 0; i < chipEls.length; i++) {
+        const nextUsed = used + (count > 0 ? gap : 0) + chipEls[i].offsetWidth
+        const remainingAfter = chipEls.length - (i + 1)
+        const reserve = remainingAfter > 0 && moreEl ? gap + moreEl.offsetWidth : 0
+        if (i === 0 || nextUsed + reserve <= available) {
+          used = nextUsed
+          count = i + 1
+        } else {
+          break
+        }
+      }
+      setVisibleChipCount(count)
+    }
+
+    recompute()
+    const ro = new ResizeObserver(recompute)
+    ro.observe(container)
+    return () => ro.disconnect()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subItems.map((s) => s.name).join('|')])
 
   const stopMomentum = () => {
     if (momentumFrame.current !== null) {
@@ -220,21 +260,55 @@ export function FoodCard({
           </div>
         )}
         {subItems.length > 0 && (
-          <div className="sub-items-summary">
-            <span
-              className={`sub-item-chip${subItems[0].selected === false ? ' is-excluded' : ''}${readOnly ? '' : ' is-toggleable'}`}
-              onClick={
-                readOnly
-                  ? undefined
-                  : (e) => {
-                      e.stopPropagation()
-                      onToggleSubItem(item.id, subItems[0].id)
-                    }
-              }
+          <div className="sub-items-summary" ref={chipsRef} style={{ position: 'relative' }}>
+            {subItems.slice(0, visibleChipCount).map((sub) => (
+              <span
+                key={sub.id}
+                className={`sub-item-chip${sub.selected === false ? ' is-excluded' : ''}${readOnly ? '' : ' is-toggleable'}`}
+                onClick={
+                  readOnly
+                    ? undefined
+                    : (e) => {
+                        e.stopPropagation()
+                        onToggleSubItem(item.id, sub.id)
+                      }
+                }
+              >
+                {sub.name}
+              </span>
+            ))}
+            {subItems.length > visibleChipCount && (
+              <span className="sub-item-chip is-more">+{subItems.length - visibleChipCount}</span>
+            )}
+            <div
+              ref={chipMeasureRef}
+              aria-hidden="true"
+              style={{
+                position: 'absolute',
+                visibility: 'hidden',
+                height: 0,
+                overflow: 'hidden',
+                display: 'flex',
+                gap: 4,
+                top: 0,
+                left: 0,
+                pointerEvents: 'none',
+              }}
             >
-              {subItems[0].name}
-            </span>
-            {subItems.length > 1 && <span className="sub-item-chip is-more">+{subItems.length - 1}</span>}
+              {subItems.map((sub) => (
+                <span
+                  key={sub.id}
+                  data-chip
+                  className={`sub-item-chip${sub.selected === false ? ' is-excluded' : ''}`}
+                  style={{ flex: 'none' }}
+                >
+                  {sub.name}
+                </span>
+              ))}
+              <span data-more className="sub-item-chip is-more" style={{ flex: 'none' }}>
+                +{subItems.length}
+              </span>
+            </div>
           </div>
         )}
         <div className="stat-grid">
