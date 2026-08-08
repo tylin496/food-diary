@@ -59,7 +59,13 @@ function FoodBook({
   const filteredItems = useMemo(() => {
     const q = search.trim().toLowerCase()
     if (!q) return items
-    return items.filter((item) => item.name.toLowerCase().includes(q))
+    return items.filter((item) => {
+      if (item.name.toLowerCase().includes(q)) return true
+      return (item.subItems ?? []).some((sub) => {
+        if (sub.name.toLowerCase().includes(q)) return true
+        return (sub.ingredients ?? []).some((ing) => ing.name.toLowerCase().includes(q))
+      })
+    })
   }, [items, search])
 
   const reorderEnabled = isOwner && search.trim().length === 0
