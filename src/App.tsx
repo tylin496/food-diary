@@ -8,7 +8,6 @@ import { emptyDraft, getFoodTotals } from './types'
 import { FoodCard } from './components/FoodCard'
 import { SelectionBar } from './components/SelectionBar'
 import { FoodModal } from './components/FoodModal'
-import { SubItemPicker } from './components/SubItemPicker'
 import { formatItemsAsText, generateId, toNumber } from './utils'
 
 const GRAYSCALE_PHOTOS = false
@@ -65,7 +64,6 @@ function FoodBook({
   const [draggingId, setDraggingId] = useState<string | null>(null)
   const [removingIds, setRemovingIds] = useState<Set<string>>(new Set())
   const [modalClosing, setModalClosing] = useState(false)
-  const [pickerItemId, setPickerItemId] = useState<string | null>(null)
 
   const foodGridRef = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -277,41 +275,6 @@ function FoodBook({
       ),
     [selectedItems],
   )
-
-  // Cards with more than one sub-item ask which ones to count before being
-  // selected; everything else selects straight away.
-  const handleCardToggle = (id: string) => {
-    if (selectedIds.has(id)) {
-      toggleSelect(id)
-      return
-    }
-    const item = items.find((candidate) => candidate.id === id)
-    if ((item?.subItems?.length ?? 0) > 1) {
-      setPickerItemId(id)
-      return
-    }
-    toggleSelect(id)
-  }
-
-  const confirmPicker = (chosenIds: string[]) => {
-    const id = pickerItemId
-    setPickerItemId(null)
-    if (id === null) return
-    const chosen = new Set(chosenIds)
-    setItems((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              subItems: (item.subItems ?? []).map((sub) => ({ ...sub, selected: chosen.has(sub.id) })),
-            }
-          : item,
-      ),
-    )
-    if (!selectedIds.has(id)) toggleSelect(id)
-  }
-
-  const pickerItem = pickerItemId === null ? null : (items.find((item) => item.id === pickerItemId) ?? null)
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
@@ -645,7 +608,7 @@ function FoodBook({
                   reorderEnabled={reorderEnabled}
                   dragging={draggingId === item.id}
                   removing={removingIds.has(item.id)}
-                  onToggle={handleCardToggle}
+                  onToggle={toggleSelect}
                   onEdit={openEditModal}
                   onToggleSubItem={toggleSubItemSelected}
                   onDragHandlePointerDown={handleDragHandlePointerDown}
@@ -664,14 +627,6 @@ function FoodBook({
         onClear={clearSelection}
         onCopy={copySelectedAsText}
       />
-
-      {pickerItem && (
-        <SubItemPicker
-          item={pickerItem}
-          onConfirm={confirmPicker}
-          onCancel={() => setPickerItemId(null)}
-        />
-      )}
 
       {modalOpen && activeId && (
         <FoodModal
