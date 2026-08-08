@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Camera, Check, GripVertical, Plus, X } from 'lucide-react'
-import type { FoodDraft, FoodSubItemDraft } from '../types'
+import type { FoodDraft, FoodIngredientDraft, FoodSubItemDraft } from '../types'
 import { uploadToCloudinary } from '../cloudinary'
 import { useDialogDismiss } from '../useDialogDismiss'
 import { generateId, roundAmount, toNumber } from '../utils'
@@ -103,6 +103,70 @@ export function FoodModal({
 
   const removeSubItem = (id: string) => {
     onChange({ ...draft, subItems: draft.subItems.filter((sub) => sub.id !== id) })
+  }
+
+  // Ingredients belong entirely to their sub-item (e.g. "鐵板麵" under "沙朗牛排"):
+  // always counted whenever the sub-item is, with no checkbox of their own.
+  const addIngredient = (subId: string) => {
+    const sub = draft.subItems.find((s) => s.id === subId)
+    if (!sub) return
+    const ingredients = sub.ingredients ?? []
+    const newIngredient: FoodIngredientDraft = { id: generateId(), name: '', weight: '', protein: '', calories: '' }
+
+    // First ingredient: split the sub-item's own manually-entered numbers out
+    // into their own row, mirroring how the top-level fields split for sub-items.
+    const hasBaseValues =
+      ingredients.length === 0 &&
+      (toNumber(sub.weight) > 0 || toNumber(sub.calories) > 0 || toNumber(sub.protein) > 0)
+    if (hasBaseValues) {
+      const baseIngredient: FoodIngredientDraft = {
+        id: generateId(),
+        name: sub.name.trim() || '本體',
+        weight: sub.weight,
+        protein: sub.protein,
+        calories: sub.calories,
+      }
+      updateSubItem(subId, {
+        weight: '0',
+        calories: '0',
+        protein: '0',
+        ingredients: [baseIngredient, newIngredient],
+      })
+      return
+    }
+
+    updateSubItem(subId, { ingredients: [...ingredients, newIngredient] })
+  }
+
+  const updateIngredient = (subId: string, ingredientId: string, patch: Partial<FoodIngredientDraft>) => {
+    const sub = draft.subItems.find((s) => s.id === subId)
+    if (!sub) return
+    updateSubItem(subId, {
+      ingredients: (sub.ingredients ?? []).map((ing) => (ing.id === ingredientId ? { ...ing, ...patch } : ing)),
+    })
+  }
+
+  const removeIngredient = (subId: string, ingredientId: string) => {
+    const sub = draft.subItems.find((s) => s.id === subId)
+    if (!sub) return
+    updateSubItem(subId, { ingredients: (sub.ingredients ?? []).filter((ing) => ing.id !== ingredientId) })
+  }
+
+  const subItemTotals = (sub: FoodSubItemDraft) => {
+    const ingredients = sub.ingredients ?? []
+    const hasIngredients = ingredients.length > 0
+    return {
+      hasIngredients,
+      weight: hasIngredients
+        ? roundAmount(toNumber(sub.weight) + ingredients.reduce((sum, ing) => sum + toNumber(ing.weight), 0))
+        : toNumber(sub.weight),
+      calories: hasIngredients
+        ? roundAmount(toNumber(sub.calories) + ingredients.reduce((sum, ing) => sum + toNumber(ing.calories), 0))
+        : toNumber(sub.calories),
+      protein: hasIngredients
+        ? roundAmount(toNumber(sub.protein) + ingredients.reduce((sum, ing) => sum + toNumber(ing.protein), 0))
+        : toNumber(sub.protein),
+    }
   }
 
   // Mirrors the food-grid card drag system in App.tsx: the grabbed row follows
@@ -279,13 +343,13 @@ export function FoodModal({
   const hasSubItems = draft.subItems.length > 0
   const selectedSubItems = draft.subItems.filter((sub) => sub.selected)
   const totalWeight = roundAmount(
-    toNumber(draft.weight) + selectedSubItems.reduce((sum, sub) => sum + toNumber(sub.weight), 0),
+    toNumber(draft.weight) + selectedSubItems.reduce((sum, sub) => sum + subItemTotals(sub).weight, 0),
   )
   const totalCalories = roundAmount(
-    toNumber(draft.calories) + selectedSubItems.reduce((sum, sub) => sum + toNumber(sub.calories), 0),
+    toNumber(draft.calories) + selectedSubItems.reduce((sum, sub) => sum + subItemTotals(sub).calories, 0),
   )
   const totalProtein = roundAmount(
-    toNumber(draft.protein) + selectedSubItems.reduce((sum, sub) => sum + toNumber(sub.protein), 0),
+    toNumber(draft.protein) + selectedSubItems.reduce((sum, sub) => sum + subItemTotals(sub).protein, 0),
   )
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -429,74 +493,144 @@ export function FoodModal({
 
           {draft.subItems.length > 0 && (
             <div className="sub-items" ref={subItemsRef}>
-              {draft.subItems.map((sub) => (
-                <div
-                  className={`sub-item-row${sub.selected ? '' : ' is-excluded'}${sub.id === draggingSubItemId ? ' is-dragging' : ''}`}
-                  key={sub.id}
-                  data-sub-item-id={sub.id}
-                >
-                  <div className="sub-item-row-top">
-                    <button
-                      type="button"
-                      className="sub-item-grip"
-                      aria-label="拖曳排序子項目"
-                      onPointerDown={(e) => handleSubItemGripDown(e, sub.id)}
-                      onPointerMove={handleSubItemGripMove}
-                      onPointerUp={handleSubItemGripUp}
-                      onPointerCancel={handleSubItemGripUp}
-                    >
-                      <GripVertical size={14} />
-                    </button>
-                    <input
-                      type="checkbox"
-                      className="sub-item-checkbox"
-                      aria-label={sub.selected ? '取消計入加總' : '計入加總'}
-                      checked={sub.selected}
-                      onChange={(e) => selectSubItem(sub.id, e.target.checked)}
-                    />
-                    <input
-                      className="input"
-                      value={sub.name}
-                      onChange={(e) => updateSubItem(sub.id, { name: e.target.value })}
-                      placeholder="例如：加鯛魚"
-                    />
-                    <button
-                      type="button"
-                      className="sub-item-remove"
-                      aria-label="刪除子項目"
-                      onClick={() => removeSubItem(sub.id)}
-                    >
-                      <X size={14} />
-                    </button>
+              {draft.subItems.map((sub) => {
+                const subTotals = subItemTotals(sub)
+                return (
+                  <div
+                    className={`sub-item-row${sub.selected ? '' : ' is-excluded'}${sub.id === draggingSubItemId ? ' is-dragging' : ''}`}
+                    key={sub.id}
+                    data-sub-item-id={sub.id}
+                  >
+                    <div className="sub-item-row-top">
+                      <button
+                        type="button"
+                        className="sub-item-grip"
+                        aria-label="拖曳排序子項目"
+                        onPointerDown={(e) => handleSubItemGripDown(e, sub.id)}
+                        onPointerMove={handleSubItemGripMove}
+                        onPointerUp={handleSubItemGripUp}
+                        onPointerCancel={handleSubItemGripUp}
+                      >
+                        <GripVertical size={14} />
+                      </button>
+                      <input
+                        type="checkbox"
+                        className="sub-item-checkbox"
+                        aria-label={sub.selected ? '取消計入加總' : '計入加總'}
+                        checked={sub.selected}
+                        onChange={(e) => selectSubItem(sub.id, e.target.checked)}
+                      />
+                      <input
+                        className="input"
+                        value={sub.name}
+                        onChange={(e) => updateSubItem(sub.id, { name: e.target.value })}
+                        placeholder="例如：加鯛魚"
+                      />
+                      <button
+                        type="button"
+                        className="sub-item-remove"
+                        aria-label="刪除子項目"
+                        onClick={() => removeSubItem(sub.id)}
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                    <div className="sub-item-row-numbers">
+                      <input
+                        className="input"
+                        type="number"
+                        inputMode="decimal"
+                        value={subTotals.hasIngredients ? subTotals.weight : sub.weight}
+                        disabled={subTotals.hasIngredients}
+                        onChange={(e) => updateSubItem(sub.id, { weight: e.target.value })}
+                        placeholder="重量 (g)"
+                      />
+                      <input
+                        className="input"
+                        type="number"
+                        inputMode="decimal"
+                        value={subTotals.hasIngredients ? subTotals.calories : sub.calories}
+                        disabled={subTotals.hasIngredients}
+                        onChange={(e) => updateSubItem(sub.id, { calories: e.target.value })}
+                        placeholder="熱量 (kcal)"
+                      />
+                      <input
+                        className="input"
+                        type="number"
+                        inputMode="decimal"
+                        value={subTotals.hasIngredients ? subTotals.protein : sub.protein}
+                        disabled={subTotals.hasIngredients}
+                        onChange={(e) => updateSubItem(sub.id, { protein: e.target.value })}
+                        placeholder="蛋白質 (g)"
+                      />
+                    </div>
+
+                    <div className="ingredients-section">
+                      <div className="ingredients-header">
+                        <span>成分・一定計入{sub.name.trim() || '此項目'}</span>
+                        <button
+                          type="button"
+                          className="btn-ghost btn-add-ingredient"
+                          onClick={() => addIngredient(sub.id)}
+                        >
+                          <Plus size={12} />
+                          新增成分
+                        </button>
+                      </div>
+                      {(sub.ingredients?.length ?? 0) > 0 && (
+                        <div className="ingredients">
+                          {sub.ingredients!.map((ing) => (
+                            <div className="ingredient-row" key={ing.id}>
+                              <div className="ingredient-row-top">
+                                <input
+                                  className="input"
+                                  value={ing.name}
+                                  onChange={(e) => updateIngredient(sub.id, ing.id, { name: e.target.value })}
+                                  placeholder="例如：鐵板麵"
+                                />
+                                <button
+                                  type="button"
+                                  className="sub-item-remove"
+                                  aria-label="刪除成分"
+                                  onClick={() => removeIngredient(sub.id, ing.id)}
+                                >
+                                  <X size={12} />
+                                </button>
+                              </div>
+                              <div className="ingredient-row-numbers">
+                                <input
+                                  className="input"
+                                  type="number"
+                                  inputMode="decimal"
+                                  value={ing.weight}
+                                  onChange={(e) => updateIngredient(sub.id, ing.id, { weight: e.target.value })}
+                                  placeholder="重量 (g)"
+                                />
+                                <input
+                                  className="input"
+                                  type="number"
+                                  inputMode="decimal"
+                                  value={ing.calories}
+                                  onChange={(e) => updateIngredient(sub.id, ing.id, { calories: e.target.value })}
+                                  placeholder="熱量 (kcal)"
+                                />
+                                <input
+                                  className="input"
+                                  type="number"
+                                  inputMode="decimal"
+                                  value={ing.protein}
+                                  onChange={(e) => updateIngredient(sub.id, ing.id, { protein: e.target.value })}
+                                  placeholder="蛋白質 (g)"
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="sub-item-row-numbers">
-                    <input
-                      className="input"
-                      type="number"
-                      inputMode="decimal"
-                      value={sub.weight}
-                      onChange={(e) => updateSubItem(sub.id, { weight: e.target.value })}
-                      placeholder="重量 (g)"
-                    />
-                    <input
-                      className="input"
-                      type="number"
-                      inputMode="decimal"
-                      value={sub.calories}
-                      onChange={(e) => updateSubItem(sub.id, { calories: e.target.value })}
-                      placeholder="熱量 (kcal)"
-                    />
-                    <input
-                      className="input"
-                      type="number"
-                      inputMode="decimal"
-                      value={sub.protein}
-                      onChange={(e) => updateSubItem(sub.id, { protein: e.target.value })}
-                      placeholder="蛋白質 (g)"
-                    />
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>

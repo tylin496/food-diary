@@ -389,6 +389,13 @@ function FoodBook({
       protein: String(sub.protein),
       calories: String(sub.calories),
       selected: sub.selected !== false,
+      ingredients: (sub.ingredients ?? []).map((ing) => ({
+        id: ing.id,
+        name: ing.name,
+        weight: String(ing.weight),
+        protein: String(ing.protein),
+        calories: String(ing.calories),
+      })),
     }))
     // Legacy records may still carry their own base numbers alongside sub-items;
     // split them out into a row so the top fields can show a clean auto-sum.
@@ -473,6 +480,15 @@ function FoodBook({
         protein: toNumber(sub.protein),
         calories: toNumber(sub.calories),
         selected: sub.selected,
+        ingredients: (sub.ingredients ?? [])
+          .filter((ing) => ing.name.trim().length > 0)
+          .map((ing) => ({
+            id: ing.id,
+            name: ing.name.trim(),
+            weight: toNumber(ing.weight),
+            protein: toNumber(ing.protein),
+            calories: toNumber(ing.calories),
+          })),
       }))
     captureRects()
     if (editingId) {
