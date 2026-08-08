@@ -25,16 +25,10 @@ export function formatItemsAsText(
   overridesByItem?: Record<string, SubItemOverrides>,
 ): string {
   const lines: string[] = []
-  let totalWeight = 0
-  let totalProtein = 0
-  let totalCalories = 0
 
   items.forEach((item, index) => {
     const overrides = overridesByItem?.[item.id]
     const totals = getFoodTotals(item, overrides)
-    totalWeight += totals.weight
-    totalProtein += totals.protein
-    totalCalories += totals.calories
 
     lines.push(`${index + 1}. ${item.name}`)
     lines.push(`   重量 ${formatAmount(totals.weight)}g`)
@@ -55,14 +49,6 @@ export function formatItemsAsText(
       }
     }
   })
-
-  if (items.length > 1) {
-    lines.push('')
-    lines.push(`總計：重量 ${formatAmount(totalWeight)}g`)
-    lines.push(
-      `     熱量 ${formatAmount(totalCalories)}kcal / 蛋白質 ${formatAmount(totalProtein)}g`,
-    )
-  }
 
   return lines.join('\n')
 }
