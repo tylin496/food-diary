@@ -45,8 +45,19 @@ export const emptyDraft: FoodDraft = {
   subItems: [],
 }
 
-export function getFoodTotals(item: FoodItem): { weight: number; protein: number; calories: number } {
-  const subItems = (item.subItems ?? []).filter((sub) => sub.selected !== false)
+// A guest's local sub-item toggles never touch the shared record — this is the
+// per-item override map (subId -> selected) layered on top of it for display/totals.
+export type SubItemOverrides = Record<string, boolean>
+
+export function isSubItemSelected(sub: FoodSubItem, overrides?: SubItemOverrides): boolean {
+  return (overrides?.[sub.id] ?? sub.selected) !== false
+}
+
+export function getFoodTotals(
+  item: FoodItem,
+  overrides?: SubItemOverrides,
+): { weight: number; protein: number; calories: number } {
+  const subItems = (item.subItems ?? []).filter((sub) => isSubItemSelected(sub, overrides))
   return subItems.reduce(
     (acc, sub) => ({
       weight: acc.weight + sub.weight,

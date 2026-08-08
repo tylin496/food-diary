@@ -1,5 +1,5 @@
-import type { FoodItem } from './types'
-import { getFoodTotals } from './types'
+import type { FoodItem, SubItemOverrides } from './types'
+import { getFoodTotals, isSubItemSelected } from './types'
 
 export function toNumber(value: string): number {
   const n = Number(value)
@@ -20,14 +20,18 @@ export function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 }
 
-export function formatItemsAsText(items: FoodItem[]): string {
+export function formatItemsAsText(
+  items: FoodItem[],
+  overridesByItem?: Record<string, SubItemOverrides>,
+): string {
   const lines: string[] = []
   let totalWeight = 0
   let totalProtein = 0
   let totalCalories = 0
 
   items.forEach((item, index) => {
-    const totals = getFoodTotals(item)
+    const overrides = overridesByItem?.[item.id]
+    const totals = getFoodTotals(item, overrides)
     totalWeight += totals.weight
     totalProtein += totals.protein
     totalCalories += totals.calories
@@ -37,6 +41,7 @@ export function formatItemsAsText(items: FoodItem[]): string {
       `   重量 ${formatAmount(totals.weight)}g / 蛋白質 ${formatAmount(totals.protein)}g / 熱量 ${formatAmount(totals.calories)}kcal`,
     )
     for (const sub of item.subItems ?? []) {
+      if (!isSubItemSelected(sub, overrides)) continue
       lines.push(
         `   - ${sub.name}：重量 ${formatAmount(sub.weight)}g / 蛋白質 ${formatAmount(sub.protein)}g / 熱量 ${formatAmount(sub.calories)}kcal`,
       )

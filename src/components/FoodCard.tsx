@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import { Camera, Check, Pencil } from 'lucide-react'
-import type { FoodItem } from '../types'
-import { getFoodTotals } from '../types'
+import type { FoodItem, SubItemOverrides } from '../types'
+import { getFoodTotals, isSubItemSelected } from '../types'
 import { formatAmount } from '../utils'
 
 const LONG_PRESS_MS = 450
@@ -19,6 +19,7 @@ interface FoodCardProps {
   onEdit: (id: string) => void
   onToggleSubItem: (id: string, subId: string) => void
   onDragHandlePointerDown: (id: string, e: React.PointerEvent) => void
+  guestOverrides?: SubItemOverrides
 }
 
 export function FoodCard({
@@ -33,8 +34,9 @@ export function FoodCard({
   onEdit,
   onToggleSubItem,
   onDragHandlePointerDown,
+  guestOverrides,
 }: FoodCardProps) {
-  const totals = getFoodTotals(item)
+  const totals = getFoodTotals(item, guestOverrides)
   const subItems = item.subItems ?? []
   // Without sub-items the weight itself labels the portion, so it becomes the
   // lone chip instead of being repeated in the meta row.
@@ -264,15 +266,11 @@ export function FoodCard({
             {subItems.slice(0, visibleChipCount).map((sub) => (
               <span
                 key={sub.id}
-                className={`sub-item-chip${sub.selected === false ? ' is-excluded' : ''}${readOnly ? '' : ' is-toggleable'}`}
-                onClick={
-                  readOnly
-                    ? undefined
-                    : (e) => {
-                        e.stopPropagation()
-                        onToggleSubItem(item.id, sub.id)
-                      }
-                }
+                className={`sub-item-chip${isSubItemSelected(sub, guestOverrides) ? '' : ' is-excluded'} is-toggleable`}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onToggleSubItem(item.id, sub.id)
+                }}
               >
                 {sub.name}
               </span>
@@ -299,7 +297,7 @@ export function FoodCard({
                 <span
                   key={sub.id}
                   data-chip
-                  className={`sub-item-chip${sub.selected === false ? ' is-excluded' : ''}`}
+                  className={`sub-item-chip${isSubItemSelected(sub, guestOverrides) ? '' : ' is-excluded'}`}
                   style={{ flex: 'none' }}
                 >
                   {sub.name}

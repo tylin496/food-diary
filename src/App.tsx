@@ -3,6 +3,7 @@ import { Image as ImageIcon, Plus, Search } from 'lucide-react'
 import { useAuth } from './useAuth'
 import { useTheme } from './useTheme'
 import { useCloudItems } from './useCloudItems'
+import { useGuestOverrides } from './useGuestOverrides'
 import type { FoodDraft, FoodItem } from './types'
 import { emptyDraft, getFoodTotals } from './types'
 import { FoodCard } from './components/FoodCard'
@@ -45,6 +46,7 @@ function FoodBook({
   onLogOut: () => void
 }) {
   const [items, setItems, itemsLoading] = useCloudItems(OWNER_UID)
+  const { overrides: guestOverrides, toggle: toggleGuestSubItem } = useGuestOverrides()
   useTheme()
   const [search, setSearch] = useState('')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -264,7 +266,7 @@ function FoodBook({
     () =>
       selectedItems.reduce(
         (acc, item) => {
-          const itemTotals = getFoodTotals(item)
+          const itemTotals = getFoodTotals(item, isOwner ? undefined : guestOverrides[item.id])
           return {
             weight: acc.weight + itemTotals.weight,
             protein: acc.protein + itemTotals.protein,
@@ -273,7 +275,7 @@ function FoodBook({
         },
         { weight: 0, protein: 0, calories: 0 },
       ),
-    [selectedItems],
+    [selectedItems, isOwner, guestOverrides],
   )
 
   const toggleSelect = (id: string) => {
@@ -290,7 +292,7 @@ function FoodBook({
   const selectAll = () => setSelectedIds(new Set(filteredItems.map((item) => item.id)))
 
   const copySelectedAsText = () => {
-    navigator.clipboard.writeText(formatItemsAsText(selectedItems))
+    navigator.clipboard.writeText(formatItemsAsText(selectedItems, isOwner ? undefined : guestOverrides))
   }
 
   useEffect(() => {
@@ -446,6 +448,18 @@ function FoodBook({
         }
       }),
     )
+  }
+
+  // Owner edits write straight to the shared record; guests can't write there,
+  // so their taps flip a local-only override instead (see useGuestOverrides).
+  const handleToggleSubItem = (id: string, subId: string) => {
+    if (isOwner) {
+      toggleSubItemSelected(id, subId)
+      return
+    }
+    const sub = items.find((item) => item.id === id)?.subItems?.find((s) => s.id === subId)
+    if (!sub) return
+    toggleGuestSubItem(id, subId, sub.selected !== false)
   }
 
   const handleSave = () => {
@@ -610,8 +624,9 @@ function FoodBook({
                   removing={removingIds.has(item.id)}
                   onToggle={toggleSelect}
                   onEdit={openEditModal}
-                  onToggleSubItem={toggleSubItemSelected}
+                  onToggleSubItem={handleToggleSubItem}
                   onDragHandlePointerDown={handleDragHandlePointerDown}
+                  guestOverrides={isOwner ? undefined : guestOverrides[item.id]}
                 />
               ))}
             </div>
