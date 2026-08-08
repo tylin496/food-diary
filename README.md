@@ -34,17 +34,22 @@ npm run dev
 1. 到 [Firebase Console](https://console.firebase.google.com) 建立新專案。
 2. **Build > Authentication > Get started**，啟用 Google 登入方式。
 3. **Build > Firestore Database > Create database**，選一個地區建立。
-4. 到 **Firestore Database > Rules**，貼上：
+4. 到 **Firestore Database > Rules**，貼上（把 uid 換成你自己的，見下方說明）：
    ```
    rules_version = '2';
    service cloud.firestore {
      match /databases/{database}/documents {
        match /users/{uid}/{document=**} {
-         allow read, write: if request.auth != null && request.auth.uid == uid;
+         allow read: if uid == '你的 Google 帳號 uid';
+         allow write: if request.auth != null && request.auth.uid == uid;
        }
      }
    }
    ```
+   這份規則讓**任何人（含未登入訪客）都能讀**擁有者那份資料，Live Demo 才看得到內容；
+   **寫入則只有擁有者本人**（uid 相符）才過得了，其他帳號登入後只會是唯讀畫面，
+   直接呼叫 Firestore API 也一樣被擋。同一組 uid 也要填進 `src/App.tsx` 的 `OWNER_UID`
+   （前端用它決定要不要顯示編輯 UI）；uid 可在 **Authentication > Users** 查到。
 5. **專案設定（齒輪圖示）> 一般 > 你的應用程式 > 新增應用程式（網頁）**，複製產生的 `firebaseConfig`，填進 `.env`。
 6. 若透過 GitHub Pages 部署，把同樣六個值加進 repo 的 **Settings > Secrets and variables > Actions**（名稱要對應 `.env.example` 裡的變數名）。
 7. **Authentication > Settings > Authorized domains**，加入部署網域（例如 `tylin496.github.io`），Google 登入才能在正式環境運作。
