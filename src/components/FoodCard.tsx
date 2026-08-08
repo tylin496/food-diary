@@ -1,4 +1,5 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Camera, Check, Pencil } from 'lucide-react'
 import type { FoodItem, SubItemOverrides } from '../types'
 import { getFoodTotals, isSubItemSelected } from '../types'
@@ -6,6 +7,7 @@ import { formatAmount } from '../utils'
 
 const LONG_PRESS_MS = 450
 const LONG_PRESS_MOVE_TOLERANCE = 10
+const OVERFLOW_MENU_WIDTH = 180
 
 interface FoodCardProps {
   item: FoodItem
@@ -66,6 +68,35 @@ export function FoodCard({
   const chipsRef = useRef<HTMLDivElement | null>(null)
   const chipMeasureRef = useRef<HTMLDivElement | null>(null)
   const [visibleChipCount, setVisibleChipCount] = useState(subItems.length)
+
+  // The "+N" chip opens a small popover listing the sub-items that didn't fit,
+  // so they stay toggleable instead of being stranded off-screen.
+  const moreChipRef = useRef<HTMLSpanElement | null>(null)
+  const overflowMenuRef = useRef<HTMLDivElement | null>(null)
+  const [overflowMenuPos, setOverflowMenuPos] = useState<{ top: number; left: number } | null>(null)
+
+  useEffect(() => {
+    if (!overflowMenuPos) return
+    const close = () => setOverflowMenuPos(null)
+    const onPointerDown = (e: PointerEvent) => {
+      const target = e.target as Node
+      if (overflowMenuRef.current?.contains(target) || moreChipRef.current?.contains(target)) return
+      close()
+    }
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') close()
+    }
+    document.addEventListener('pointerdown', onPointerDown)
+    document.addEventListener('keydown', onKeyDown)
+    window.addEventListener('scroll', close, true)
+    window.addEventListener('resize', close)
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown)
+      document.removeEventListener('keydown', onKeyDown)
+      window.removeEventListener('scroll', close, true)
+      window.removeEventListener('resize', close)
+    }
+  }, [overflowMenuPos])
 
   useLayoutEffect(() => {
     if (subItems.length === 0) return
@@ -276,7 +307,19 @@ export function FoodCard({
               </span>
             ))}
             {subItems.length > visibleChipCount && (
-              <span className="sub-item-chip is-more">+{subItems.length - visibleChipCount}</span>
+              <span
+                ref={moreChipRef}
+                className="sub-item-chip is-more"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  const rect = e.currentTarget.getBoundingClientRect()
+                  let left = rect.right - OVERFLOW_MENU_WIDTH
+                  left = Math.min(Math.max(8, left), window.innerWidth - OVERFLOW_MENU_WIDTH - 8)
+                  setOverflowMenuPos((pos) => (pos ? null : { top: rect.bottom + 6, left }))
+                }}
+              >
+                +{subItems.length - visibleChipCount}
+              </span>
             )}
             <div
               ref={chipMeasureRef}
@@ -321,6 +364,27 @@ export function FoodCard({
           </div>
         </div>
       </div>
+      {overflowMenuPos &&
+        createPortal(
+          <div
+            ref={overflowMenuRef}
+            className="sub-item-overflow-menu"
+            style={{ top: overflowMenuPos.top, left: overflowMenuPos.left, width: OVERFLOW_MENU_WIDTH }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {subItems.slice(visibleChipCount).map((sub) => (
+              <button
+                key={sub.id}
+                type="button"
+                className={`sub-item-overflow-row${isSubItemSelected(sub, guestOverrides) ? '' : ' is-excluded'}`}
+                onClick={() => onToggleSubItem(item.id, sub.id)}
+              >
+                {sub.name}
+              </button>
+            ))}
+          </div>,
+          document.body,
+        )}
     </div>
   )
 }
