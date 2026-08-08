@@ -38,16 +38,16 @@ export function formatItemsAsText(
 
     lines.push(`${index + 1}. ${item.name}`)
     lines.push(
-      `   重量 ${formatAmount(totals.weight)}g / 蛋白質 ${formatAmount(totals.protein)}g / 熱量 ${formatAmount(totals.calories)}kcal`,
+      `   熱量 ${formatAmount(totals.calories)}kcal / 重量 ${formatAmount(totals.weight)}g / 蛋白質 ${formatAmount(totals.protein)}g`,
     )
     for (const sub of item.subItems ?? []) {
       const subTotals = getSubItemTotals(sub)
       lines.push(
-        `   - ${sub.name}：重量 ${formatAmount(subTotals.weight)}g / 蛋白質 ${formatAmount(subTotals.protein)}g / 熱量 ${formatAmount(subTotals.calories)}kcal`,
+        `   - ${sub.name}：熱量 ${formatAmount(subTotals.calories)}kcal / 重量 ${formatAmount(subTotals.weight)}g / 蛋白質 ${formatAmount(subTotals.protein)}g`,
       )
       for (const ing of sub.ingredients ?? []) {
         lines.push(
-          `     · ${ing.name}：重量 ${formatAmount(ing.weight)}g / 蛋白質 ${formatAmount(ing.protein)}g / 熱量 ${formatAmount(ing.calories)}kcal`,
+          `     · ${ing.name}：熱量 ${formatAmount(ing.calories)}kcal / 重量 ${formatAmount(ing.weight)}g / 蛋白質 ${formatAmount(ing.protein)}g`,
         )
       }
     }
@@ -56,7 +56,7 @@ export function formatItemsAsText(
   if (items.length > 1) {
     lines.push('')
     lines.push(
-      `總計：重量 ${formatAmount(totalWeight)}g / 蛋白質 ${formatAmount(totalProtein)}g / 熱量 ${formatAmount(totalCalories)}kcal`,
+      `總計：熱量 ${formatAmount(totalCalories)}kcal / 重量 ${formatAmount(totalWeight)}g / 蛋白質 ${formatAmount(totalProtein)}g`,
     )
   }
 
